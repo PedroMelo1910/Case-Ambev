@@ -1,0 +1,1104 @@
+{
+  "descricao": "K-PREP-03: correspondência de nomes, códigos e unidades entre a POF 2008-2009 e a 2017-2018. Posição, tamanho e categorias foram lidos dos dicionários oficiais e são reconferidos a cada execução.",
+  "estado": "registrado e testado; nenhum rótulo de alvo foi lido ou construído",
+  "conceitos": [
+    {
+      "conceito": "registro_consumo",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "tabela",
+      "acao": "Excluir linhas de adição (V9005 e V9007 em branco) antes de contar itens ou episódios.",
+      "observacao": "O dicionário de 2008 não tem campos de adição (inferência pelo dicionário; conferida na execução: os episódios de 2008 não usam o filtro).",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "T_CONSUMO_S (735.814 linhas)",
+          "variaveis": []
+        },
+        "2017-2018": {
+          "nome": "CONSUMO_ALIMENTAR (1.175.390 linhas; 168.264 de adição)",
+          "variaveis": []
+        }
+      }
+    },
+    {
+      "conceito": "pessoa",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "chave",
+      "acao": "Normalizar as chaves como inteiros; unicidade conferida em MORADOR a cada execução.",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "COD_UF+NUM_SEQ+NUM_DV+NUM_DOM+NUM_UC+COD_INFORMANTE (zeros à esquerda no consumo, espaços nos demais)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_SEQ",
+              "posicao": 5,
+              "tamanho": 3
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DV",
+              "posicao": 8,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 9,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_UC",
+              "posicao": 11,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_INFORMANTE",
+              "posicao": 12,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "COD_UPA+NUM_DOM+NUM_UC+COD_INFORMANTE",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UPA",
+              "posicao": 8,
+              "tamanho": 9
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 17,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_UC",
+              "posicao": 19,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_INFORMANTE",
+              "posicao": 20,
+              "tamanho": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "domicilio",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "chave",
+      "acao": "Chave com prefixo da edição; PESO_FINAL é constante no domicílio.",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "COD_UF+NUM_SEQ+NUM_DV+NUM_DOM",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_SEQ",
+              "posicao": 5,
+              "tamanho": 3
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DV",
+              "posicao": 8,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 9,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "COD_UPA+NUM_DOM",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UPA",
+              "posicao": 8,
+              "tamanho": 9
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 17,
+              "tamanho": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "upa",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "chave",
+      "acao": "Construir o identificador de UPA por edição; fica fora das features (agrupamento e variância).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "COD_UF+NUM_SEQ+NUM_DV (setor; inferência)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_SEQ",
+              "posicao": 5,
+              "tamanho": 3
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DV",
+              "posicao": 8,
+              "tamanho": 1
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "COD_UPA (UF 2 + sequencial 6 + DV 1)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UPA",
+              "posicao": 8,
+              "tamanho": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "dia_coleta",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "dia_coleta",
+      "teste": "test_quadro_para_dia_de_coleta",
+      "unidade": "ordinal 1 ou 2",
+      "acao": "Mapear 71→1 e 72→2 (2008) e 72→1 e 73→2 (2017).",
+      "observacao": "2008: 947 pessoas só com o quadro 71, 156 só com o 72; 2017: ninguém só com o 73 (auditoria).",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "NUM_QUADRO = 71 ou 72",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_QUADRO",
+              "posicao": 46,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "QUADRO = 72 ou 73",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "QUADRO",
+              "posicao": 22,
+              "tamanho": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "dia_semana",
+      "candidata": "F01",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "dia_semana",
+      "teste": "test_dia_da_semana_2017_texto_com_ou_sem_acento",
+      "unidade": "ordinal 1 (segunda) a 7 (domingo)",
+      "acao": "Normalizar para 1..7 (o texto de 2017 vem sem acento nos microdados).",
+      "observacao": "O rótulo é comum; a distribuição não: 2008 é dia escolhido pelo morador, 2017 é o dia anterior à entrevista.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "DIA_SEMANA numérico",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "DIA_SEMANA",
+              "posicao": 152,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Segunda-Feira",
+                "2 – Terça-Feira",
+                "3 – Quarta-Feira",
+                "4 – Quinta-Feira",
+                "5 – Sexta-Feira",
+                "6 – Sábado",
+                "7 – Domingo"
+              ]
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "DIA_SEMANA texto",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "DIA_SEMANA",
+              "posicao": 529,
+              "tamanho": 15,
+              "categorias": [
+                "Domingo",
+                "Segunda-Feira",
+                "Terça-Feira",
+                "Quarta-Feira",
+                "Quinta-Feira",
+                "Sexta-Feira",
+                "Sábado"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "hora",
+      "candidata": "F02",
+      "comum": "parcial",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "hora",
+      "teste": "test_hora_inteira",
+      "unidade": "hora inteira 0..23",
+      "acao": "Interpretar '09' (2008) e '9H' (2017) como hora inteira; faixas de hora fixadas antes de ver o teste.",
+      "observacao": "Mesmo valor; comportamento parcialmente diferente (registro pelo morador × recordatório). Regra de madrugada é a decisão POF-04, não tomada aqui.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "V9015 inteiro",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9015",
+              "posicao": 49,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "V9015 texto 0H..23H",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9015",
+              "posicao": 39,
+              "tamanho": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "uf",
+      "candidata": "F06",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "uf",
+      "teste": "test_uf_codigo_ibge_igual_nas_duas_edicoes",
+      "unidade": "código IBGE de 2 dígitos",
+      "acao": "Renomear COD_UF e UF para uf.",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "COD_UF",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "UF",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "UF",
+              "posicao": 1,
+              "tamanho": 2,
+              "categorias": [
+                "11 – Rondônia",
+                "12 – Acre",
+                "13 – Amazonas",
+                "14 – Roraima",
+                "15 – Pará",
+                "16 – Amapá",
+                "17 – Tocantins",
+                "21 – Maranhão",
+                "22 – Piauí",
+                "23 – Ceará",
+                "24 – Rio Grande do Norte",
+                "25 – Paraíba",
+                "26 – Pernambuco",
+                "27 – Alagoas",
+                "28 – Sergipe",
+                "29 – Bahia",
+                "31 – Minas Gerais",
+                "32 – Espírito Santo",
+                "33 – Rio de Janeiro",
+                "35 – São Paulo",
+                "41 – Paraná",
+                "42 – Santa Catarina",
+                "43 – Rio Grande do Sul",
+                "50 – Mato Grosso do Sul",
+                "51 – Mato Grosso",
+                "52 – Goiás",
+                "53 – Distrito Federal"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "grande_regiao",
+      "candidata": "F07",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "grande_regiao",
+      "teste": "test_grande_regiao_pela_uf",
+      "unidade": "Norte, Nordeste, Sudeste, Sul, Centro-Oeste",
+      "acao": "Derivar da UF (1º dígito do código IBGE).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "derivada de COD_UF",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "derivada de UF",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "UF",
+              "posicao": 1,
+              "tamanho": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "urbano_rural",
+      "candidata": "F08",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "urbano_rural",
+      "teste": "test_urbano_rural",
+      "unidade": "urbano ou rural",
+      "acao": "Mapear 1 e 2.",
+      "observacao": "Verificação K-PREP-03: em 2008 a variável existe só no registro MORADOR (posição 253), por isso o join com MORADOR é obrigatório.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "TIPO_SITUACAO_REG (registro MORADOR; não está no registro de consumo de 2008)",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "TIPO_SITUACAO_REG",
+              "posicao": 253,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Urbano",
+                "2 – Rural"
+              ]
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "TIPO_SITUACAO_REG",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "TIPO_SITUACAO_REG",
+              "posicao": 7,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Urbano",
+                "2 – Rural"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "estrato",
+      "candidata": "F09",
+      "comum": "parcial",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "area_comparavel",
+      "teste": "test_area_comparavel_une_resto_da_rm_e_resto_da_uf",
+      "unidade": "área: capital, urbano não capital, rural",
+      "acao": "Decodificar cada edição pela planilha oficial própria; o código só serve à variância. Na feature, resto da RM e resto da UF se unem.",
+      "observacao": "Os limites das regiões metropolitanas mudaram: o tipo de quatro níveis não é comum, e só área_comparavel entra nas features comuns.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "ESTRATO_POF (2 dígitos; se repete entre UFs; chave UF+estrato)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "ESTRATO_POF",
+              "posicao": 14,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "ESTRATO_POF (4 dígitos com prefixo da UF)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "ESTRATO_POF",
+              "posicao": 3,
+              "tamanho": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "idade",
+      "candidata": "F11",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "idade",
+      "teste": "test_idade_em_anos_inteira_e_dentro_do_dominio",
+      "unidade": "anos completos",
+      "acao": "Idade em anos; população de 10 anos ou mais.",
+      "observacao": "B10: o dicionário de 2008 declara a data de referência; o de 2017 não. Permanece NÃO CONFIRMADO nos documentos disponíveis.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "IDADE_ANOS (até o início da caderneta POF3)",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "IDADE_ANOS",
+              "posicao": 60,
+              "tamanho": 3
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "V0403 (anos; data de referência não declarada no dicionário)",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "V0403",
+              "posicao": 33,
+              "tamanho": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "sexo",
+      "candidata": "F13",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "sexo",
+      "teste": "test_sexo_codigos_1_e_2_nas_duas_edicoes",
+      "unidade": "masculino ou feminino",
+      "acao": "Mapear 1 e 2 (os rótulos diferem: Masculino/Feminino × Homem/Mulher).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "V0405",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "V0405",
+              "posicao": 76,
+              "tamanho": 2,
+              "categorias": [
+                "1 – Masculino",
+                "2 – Feminino"
+              ]
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "V0404",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "V0404",
+              "posicao": 36,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Homem",
+                "2 – Mulher"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "escolaridade",
+      "candidata": "F14",
+      "comum": "sim",
+      "entra_em_features_comuns": true,
+      "coluna_comum": "escolaridade",
+      "teste": "test_escolaridade_sete_niveis_identicos",
+      "unidade": "nível 1..7 (sem instrução a superior completo)",
+      "acao": "Usar a do morador (não a da pessoa de referência).",
+      "observacao": "Os 7 rótulos são idênticos nos dicionários (conferido a cada execução). A construção da derivada em cada edição não consta nos documentos disponíveis (B10).",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "NIVEL_INSTRUCAO_MORADOR",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "NIVEL_INSTRUCAO_MORADOR",
+              "posicao": 254,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Sem instrução",
+                "2 – Ensino Fundamental Incompleto",
+                "3 – Ensino Fundamental Completo",
+                "4 – Ensino Médio Incompleto",
+                "5 – Ensino Médio Completo",
+                "6 – Ensino Superior Incompleto",
+                "7 – Ensino Superior Completo"
+              ]
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "NIVEL_INSTRUCAO (derivada)",
+          "variaveis": [
+            {
+              "registro": "Morador",
+              "variavel": "NIVEL_INSTRUCAO",
+              "posicao": 116,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Sem instrução",
+                "2 – Ensino Fundamental Incompleto",
+                "3 – Ensino Fundamental Completo",
+                "4 – Ensino Médio Incompleto",
+                "5 – Ensino Médio Completo",
+                "6 – Ensino Superior Incompleto",
+                "7 – Ensino Superior Completo"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "dia_atipico",
+      "candidata": null,
+      "comum": "nao",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "binária (só 2017)",
+      "acao": "Não usar como feature: não existe em 2008 e é declarada sobre o próprio dia recordado.",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "não existe",
+          "variaveis": []
+        },
+        "2017-2018": {
+          "nome": "DIA_ATIPICO",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "DIA_ATIPICO",
+              "posicao": 544,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Sim",
+                "2 – Não"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "ocasiao",
+      "candidata": null,
+      "comum": "nao",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "categorias (só 2017)",
+      "acao": "Só descrição de 2017; não entra em feature comum.",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "não existe",
+          "variaveis": []
+        },
+        "2017-2018": {
+          "nome": "V9017",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9017",
+              "posicao": 44,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Café da manhã",
+                "2 – Almoço",
+                "3 – Lanche",
+                "4 – Jantar",
+                "5 – Ceia",
+                "6 – Outra ocasião",
+                "9 – Não determinado"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "local_refeicao",
+      "candidata": null,
+      "comum": "parcial",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "2 categorias × 7 categorias",
+      "acao": "Descartado das 29 candidatas; só descrição (2017 → binário: 1 dentro, 2 a 7 fora).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "V9018 (1 dentro, 2 fora)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9018",
+              "posicao": 48,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Dentro do domicílio",
+                "2 – Fora do domicílio"
+              ]
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "V9018 (7 categorias + 9)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9018",
+              "posicao": 45,
+              "tamanho": 1,
+              "categorias": [
+                "1 – Em casa ou levado de casa",
+                "2 – Merenda escolar",
+                "3 – Restaurante à quilo",
+                "4 – Cantina, bar, lanchonete, fast food",
+                "5 – Restaurante – outros",
+                "6 – Vendedores ambulantes ou de rua",
+                "7 – Fora de casa – outros",
+                "9 – Não determinado"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "alimento",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "código de 7 dígitos",
+      "acao": "Agrupar em pizza (lista estrita); sabor não é feature.",
+      "observacao": "A lista de pizza de 2008 inclui as versões light; a mini pizza semipronta (6502403) fica fora (sensibilidade).",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "V9001",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9001",
+              "posicao": 64,
+              "tamanho": 7
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "V9001",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "V9001",
+              "posicao": 32,
+              "tamanho": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "peso",
+      "candidata": null,
+      "comum": "parcial",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "fator de expansão do domicílio",
+      "acao": "PESO_FINAL do registro de consumo; sem pesos na comparação de modelos, só em sensibilidade.",
+      "observacao": "Peso do domicílio, não do episódio (B9). Em 2017, os pesos ficam no conjunto selado.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "PESO_FINAL (calibrado a 15/01/2009)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "PESO_FINAL",
+              "posicao": 31,
+              "tamanho": 15
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "PESO_FINAL (calibrado a 15/01/2018)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "PESO_FINAL",
+              "posicao": 504,
+              "tamanho": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "renda",
+      "candidata": null,
+      "comum": "parcial",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "R$ mensais da unidade de consumo (valores correntes da edição)",
+      "acao": "Pendente de K-PREP-08: denominador per capita e deflator. Aqui só o valor bruto da UC; nada é deflacionado nem imputado.",
+      "observacao": "Texto do dicionário idêntico nas duas edições: renda bruta total da UC (não apenas monetária).",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "RENDA_TOTAL (também RENDA_PERCAPITA, só 2008)",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "RENDA_TOTAL",
+              "posicao": 115,
+              "tamanho": 16
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "RENDA_TOTAL",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "RENDA_TOTAL",
+              "posicao": 519,
+              "tamanho": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "composicao_familiar",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "contagem de moradores da UC",
+      "acao": "Contar todos os moradores da UC (inclusive menores de 10 anos) por UPA+DOM+UC; construção na etapa de features (F18 a F24).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "MORADOR por UF+SEQ+DV+DOM+UC; idade em IDADE_ANOS",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UF",
+              "posicao": 3,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_SEQ",
+              "posicao": 5,
+              "tamanho": 3
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DV",
+              "posicao": 8,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 9,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_UC",
+              "posicao": 11,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_INFORMANTE",
+              "posicao": 12,
+              "tamanho": 2
+            },
+            {
+              "registro": "Morador",
+              "variavel": "IDADE_ANOS",
+              "posicao": 60,
+              "tamanho": 3
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "MORADOR por UPA+DOM+UC; idade em V0403",
+          "variaveis": [
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_UPA",
+              "posicao": 8,
+              "tamanho": 9
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_DOM",
+              "posicao": 17,
+              "tamanho": 2
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "NUM_UC",
+              "posicao": 19,
+              "tamanho": 1
+            },
+            {
+              "registro": "Consumo Alimentar",
+              "variavel": "COD_INFORMANTE",
+              "posicao": 20,
+              "tamanho": 2
+            },
+            {
+              "registro": "Morador",
+              "variavel": "V0403",
+              "posicao": 33,
+              "tamanho": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "moradores_por_dormitorio",
+      "candidata": null,
+      "comum": "sim",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "moradores por dormitório (domicílio)",
+      "acao": "Total de moradores do domicílio ÷ dormitórios; construção na etapa de features (F25).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "DOMICILIO.V0207",
+          "variaveis": [
+            {
+              "registro": "Domicílio",
+              "variavel": "V0207",
+              "posicao": 63,
+              "tamanho": 2
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "DOMICILIO.V0206",
+          "variaveis": [
+            {
+              "registro": "Domicílio",
+              "variavel": "V0206",
+              "posicao": 25,
+              "tamanho": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "tempo_calendario",
+      "candidata": null,
+      "comum": "nao",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "semana 1..52 (só 2008)",
+      "acao": "Sem feature de calendário; nenhuma data é reconstruída (controle de divulgação).",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "PERIODO_REAL (registro DOMICÍLIO)",
+          "variaveis": [
+            {
+              "registro": "Domicílio",
+              "variavel": "PERIODO_REAL",
+              "posicao": 41,
+              "tamanho": 4
+            }
+          ]
+        },
+        "2017-2018": {
+          "nome": "não existe (só ALUGUEL_ESTIMADO.V9010, indireto, 84,5% dos domicílios)",
+          "variaveis": [
+            {
+              "registro": "Aluguel Estimado",
+              "variavel": "V9010",
+              "posicao": 41,
+              "tamanho": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "conceito": "municipio_canal",
+      "candidata": null,
+      "comum": "nao",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "—",
+      "acao": "Só UF; canal e delivery não são observados (pizza entregue e consumida em casa é 'em casa').",
+      "observacao": null,
+      "edicoes": {
+        "2008-2009": {
+          "nome": "não existe",
+          "variaveis": []
+        },
+        "2017-2018": {
+          "nome": "não existe",
+          "variaveis": []
+        }
+      }
+    },
+    {
+      "conceito": "contexto_uf",
+      "candidata": null,
+      "comum": "parcial",
+      "entra_em_features_comuns": false,
+      "coluna_comum": null,
+      "teste": null,
+      "unidade": "percentuais por UF",
+      "acao": "Join por (edição, UF) com o ano de referência de cada edição; nada é imputado com dado de outra onda.",
+      "observacao": "Colunas anexadas à parte (bloco contexto_uf). F34 é o conceito 'domicílios com computador com internet', não posse de computador.",
+      "edicoes": {
+        "2008-2009": {
+          "nome": "Censo 2000 e PNAD 2006",
+          "variaveis": []
+        },
+        "2017-2018": {
+          "nome": "Censo 2010 e PNAD 2015",
+          "variaveis": []
+        }
+      }
+    }
+  ],
+  "contexto_uf": {
+    "arquivo": "contexto_uf.csv",
+    "sha256": "95961a0ee68c144ef4d6ce64c3f22d68f01a6f101175dd9a1c9a922accbe903f",
+    "colunas": [
+      "pct_urbano_uf",
+      "pct_pop_0_14_uf",
+      "pct_pop_15_19_uf",
+      "pct_domicilios_com_computador_com_internet_uf"
+    ],
+    "chave": [
+      "edicao_pof",
+      "uf"
+    ],
+    "chaves_esperadas": 54,
+    "anos_de_referencia": {
+      "2008-2009": {
+        "censo": 2000,
+        "pnad": 2006
+      },
+      "2017-2018": {
+        "censo": 2010,
+        "pnad": 2015
+      }
+    },
+    "fonte": "IBGE/SIDRA, API de agregados: tabela 202 (população urbana, Censo), tabela 200 (população por grupos de idade, Censo) e tabela 2387 (PNAD, domicílios com computador com internet). Acesso público; licença específica não confirmada.",
+    "origem_dos_valores": "_planejamento/pesquisa/auditoria_features_2026_10_31/coleta_final_por_codigo/CONTEXTO_UF_FINAL.csv (cópia byte a byte; snapshots e URLs da consulta em MANIFESTO_FECHAMENTO.json, SHA-256 dos snapshots eb511dbb…, bc8f9478…, ababfcaf…)"
+  }
+}

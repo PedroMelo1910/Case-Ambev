@@ -1,0 +1,22 @@
+# Microdados e derivados linha a linha NUNCA entram no repositorio (parecer da fase 2, secao 4).
+data/raw/
+data/processed/*
+!data/processed/.gitkeep
+data/raw/*
+*.parquet
+*.zip
+*.duckdb
+*.sqlite
+*.db
+*.parcial
+*.novo
+artifacts/*
+!artifacts/.gitkeep
+
+# Ambiente
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.ruff_cache/

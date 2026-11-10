@@ -1,0 +1,124 @@
+{
+  "fonte_dados": "IBGE (Instituto Brasileiro de Geografia e Estatística), Pesquisa de Orçamentos Familiares (POF)",
+  "edicoes": [
+    "2008-2009",
+    "2017-2018"
+  ],
+  "licenca_nota": "licença específica dos microdados não confirmada; aceite de risco residual em 07/11/2026",
+  "observacao_datas": "baixado_em = data da aquisicao original (auditoria de 27 a 30/10/2026). Para as duas fontes com recuperado_em, baixado_em e a aquisicao original e recuperado_em a recuperacao desta sessao; ver evidencia_datas.",
+  "origem_do_manifesto": "convertido de auditoria_pof/MANIFESTO_DOWNLOADS.json (caminhos absolutos trocados por relativos a CASE_AMBEV_RAW_ROOT); ficam so as 4 fontes que o pipeline le (dados e documentacao das duas edicoes); as demais fontes documentais seguem no manifesto da auditoria, em _planejamento; membros extraidos com SHA-256 calculado direto dos zips",
+  "fontes": [
+    {
+      "id": "Documentacao_20230713.zip",
+      "edicao": "2017-2018",
+      "url": "https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2017_2018/Microdados/Documentacao_20230713.zip",
+      "caminho_relativo": "pof_2017_2018/downloads/Documentacao_20230713.zip",
+      "tamanho_bytes": 5203471,
+      "sha256": "cbb075d2a8b986f0ddbe4800b09f972139d1d757dc3f3d373c76e9432048d755",
+      "baixado_em": "2026-10-27",
+      "last_modified_remoto": "Thu, 13 Jul 2023 18:02:54 GMT",
+      "membros": [
+        {
+          "nome": "Dicionários de váriaveis.xls",
+          "destino_relativo": "pof_2017_2018/extraido/documentacao/Dicionarios_de_variaveis.xls",
+          "sha256": "7b3dabe5e1680e7e3ba2012873eed7f66a4b3aa486f8c33b753c2d6c04a787a5",
+          "tamanho_bytes": 297984
+        },
+        {
+          "nome": "Estratos POF 2017-2018.xls",
+          "destino_relativo": "pof_2017_2018/extraido/documentacao/Estratos_POF_2017-2018.xls",
+          "sha256": "9ea7bfc15a351f5f753e95db5af7c93ed9e6f3d61051d6548db03a0f5e554326",
+          "tamanho_bytes": 13824
+        }
+      ],
+      "citacao": "IBGE. Pesquisa de Orçamentos Familiares 2017-2018: Documentacao_20230713.zip. Rio de Janeiro: IBGE. Disponível em: https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2017_2018/Microdados/Documentacao_20230713.zip. Baixado em 2026-10-27.",
+      "conferido_em": "2026-10-30",
+      "recuperado_em": "2026-11-09",
+      "evidencia_datas": "Aquisicao original: arquivo em _planejamento/pesquisa/fontes com data de modificacao 2026-10-27 17:34 (-03) e registro de origem da auditoria ('baixado em 27/10/2026'); a data e inferida desses dois indicios, sem log de download. Hash e tamanho conferidos contra o servidor do IBGE em 2026-10-30. Recuperacao: copia ausente da pasta de dados, baixada do IBGE e verificada por SHA-256 pelo comando coletar em 2026-11-09 (data de modificacao 21:05 -03)."
+    },
+    {
+      "id": "Dados_20230713.zip",
+      "edicao": "2017-2018",
+      "url": "https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2017_2018/Microdados/Dados_20230713.zip",
+      "caminho_relativo": "pof_2017_2018/downloads/Dados_20230713.zip",
+      "tamanho_bytes": 146294013,
+      "sha256": "f5b71f85452345e6e82caee15c70578c948981d8a8e5f99bd90ec60fac5b7932",
+      "baixado_em": "2026-10-30",
+      "last_modified_remoto": "Thu, 13 Jul 2023 18:02:47 GMT",
+      "membros": [
+        {
+          "nome": "CONSUMO_ALIMENTAR.txt",
+          "destino_relativo": "pof_2017_2018/extraido/dados/CONSUMO_ALIMENTAR.txt",
+          "sha256": "18459ce5b6ae38c74390f7252e8a6b90cea7a75f19d45c96d880a4d5589f78bd",
+          "tamanho_bytes": 641762940
+        },
+        {
+          "nome": "MORADOR.txt",
+          "destino_relativo": "pof_2017_2018/extraido/dados/MORADOR.txt",
+          "sha256": "eaf8c326751ec68af4d5c1358e6014bd73ef3e4ba13f7bb38916d489a618a4cc",
+          "tamanho_bytes": 35329338
+        }
+      ],
+      "citacao": "IBGE. Pesquisa de Orçamentos Familiares 2017-2018: Dados_20230713.zip. Rio de Janeiro: IBGE. Disponível em: https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2017_2018/Microdados/Dados_20230713.zip. Baixado em 2026-10-30."
+    },
+    {
+      "id": "Documentacao_20231009.zip",
+      "edicao": "2008-2009",
+      "url": "https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2008_2009/Microdados/Documentacao_20231009.zip",
+      "caminho_relativo": "pof_2008_2009/downloads/Documentacao_20231009.zip",
+      "tamanho_bytes": 1295983,
+      "sha256": "00cd1ea96ff83af5568c14b9243b970179415bd4e2a7c5c5cd6a5cdaaa1c4a27",
+      "baixado_em": "2026-10-30",
+      "last_modified_remoto": "Mon, 09 Oct 2023 14:49:54 GMT",
+      "membros": [
+        {
+          "nome": "Dicionários de váriaveis.xls",
+          "destino_relativo": "pof_2008_2009/extraido/documentacao/Dicionarios_de_variaveis.xls",
+          "sha256": "13411d7ff2d61478c92bbf23462e656cd862acbee0cefc9aefa0a3ddfd883f82",
+          "tamanho_bytes": 348160
+        },
+        {
+          "nome": "Estratos Geográficos POF 2008-2009.xls",
+          "destino_relativo": "pof_2008_2009/extraido/documentacao/Estratos_Geograficos_POF_2008-2009.xls",
+          "sha256": "bc9c3ba0e87f7936eb266eee08706b4a731a1dc55e6508d44a87d4fbba105fdf",
+          "tamanho_bytes": 20992
+        }
+      ],
+      "citacao": "IBGE. Pesquisa de Orçamentos Familiares 2008-2009: Documentacao_20231009.zip. Rio de Janeiro: IBGE. Disponível em: https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2008_2009/Microdados/Documentacao_20231009.zip. Baixado em 2026-10-30."
+    },
+    {
+      "id": "Dados_20231009.zip",
+      "edicao": "2008-2009",
+      "url": "https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2008_2009/Microdados/Dados_20231009.zip",
+      "caminho_relativo": "pof_2008_2009/downloads/Dados_20231009.zip",
+      "tamanho_bytes": 116383880,
+      "sha256": "cc2d5279dbdfd9276cde69066959b919e1a1ecaac4adf82582c6f177443ca265",
+      "baixado_em": "2026-10-30",
+      "last_modified_remoto": "Mon, 09 Oct 2023 12:16:38 GMT",
+      "membros": [
+        {
+          "nome": "T_CONSUMO_S.txt",
+          "destino_relativo": "pof_2008_2009/extraido/dados/T_CONSUMO_S.txt",
+          "sha256": "69c1014e5e5a404b87a1e1bd4c937adef00feda19877431134429784d15cfd52",
+          "tamanho_bytes": 113315356
+        },
+        {
+          "nome": "T_MORADOR_S.txt",
+          "destino_relativo": "pof_2008_2009/extraido/dados/T_MORADOR_S.txt",
+          "sha256": "4a747a42fcb1421c1f0aed5ff7799a5292bd7a98d6464bb9740c95f66f42ed39",
+          "tamanho_bytes": 50392135
+        },
+        {
+          "nome": "T_DOMICILIO_S.txt",
+          "destino_relativo": "pof_2008_2009/extraido/dados/T_DOMICILIO_S.txt",
+          "sha256": "e388944c2f7fe2d11cda7f9bd2c550b2a116ac7887dc148094c889bbaf673dfd",
+          "tamanho_bytes": 9682810
+        }
+      ],
+      "citacao": "IBGE. Pesquisa de Orçamentos Familiares 2008-2009: Dados_20231009.zip. Rio de Janeiro: IBGE. Disponível em: https://ftp.ibge.gov.br/Orcamentos_Familiares/Pesquisa_de_Orcamentos_Familiares_2008_2009/Microdados/Dados_20231009.zip. Baixado em 2026-10-30."
+    }
+  ],
+  "pendencias_entrega_final": [
+    "README: origem, edicao, URL, datas verificadas e nota de licenca (hoje apenas neste manifesto)"
+  ]
+}
