@@ -6,6 +6,7 @@ requires-python = ">=3.12,<3.13"
 # Versões do ambiente WSL (Python 3.12.15) que passou nos testes sintéticos e nos testes com microdados.
 dependencies = [
     "duckdb==2.0.0",
+    "scikit-learn==1.9.1",
     "xlrd==2.0.2",
 ]
 
