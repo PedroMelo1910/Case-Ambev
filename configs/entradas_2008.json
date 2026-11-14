@@ -1,0 +1,12 @@
+{
+  "descricao": "Saidas definitivas de 2008-2009 do PE-01 (execucao 2 do conjunto pe01_v2). A modelagem le so esta pasta; a pasta padrao pkg_f1_01/saidas tem apenas as saidas anteriores e e recusada.",
+  "pasta_relativa_a_raiz_bruta": "pkg_f1_01/pe01_v2/execucao_2/saida",
+  "variavel_de_ambiente": "CASE_AMBEV_SAIDA_ROOT",
+  "arquivos": {
+    "e2_2008.csv": "b9bbc5a4beda64bb487579916476b6ad99062194e86f37479ac86da96c491166",
+    "features_comuns_2008.csv": "25397ba69d038fcce73929e3cf9e7e55c471ec4966d25b8beea1741228fbc58a",
+    "identificadores_2008.csv": "cb0cc72e6285827544adbda2d390e3a6b16bd00a50974cb049ee19e180df84c5",
+    "variaveis_nativas_2008.csv": "1c84465387ac7ddf06a3280fe12148b344c20044615b88967a39f2fc6eb21534",
+    "matriz_logistica_2008.csv": "42997df98b25cf820e4a0f967475ce1766805b02ddc663e54f79b2d7130031a6"
+  }
+}

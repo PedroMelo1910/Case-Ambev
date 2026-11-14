@@ -28,6 +28,7 @@ from occasion.fontes import (EDICOES, Manifesto, carregar_manifesto, coletar, ex
                              raiz_selado)
 from occasion.microdados import (Layout, carregar_registro, ler_dicionario_xls, layout_de, perfil_consumo_2008,
                                  perfil_consumo_2017, somas_de_peso_morador)
+from occasion.variaveis import construir_variaveis
 from occasion.verificacao import (ARQUIVO_HASHES, REFERENCIAS, ConferenciaFalhou, chave_domicilio,
                                   chaves_completas, chaves_edicao_uf, conferir, escrever_csv, escrever_json, hashes_das_saidas,
                                   interseccao_chaves_domicilio)
@@ -127,8 +128,11 @@ def _construir(con, entradas: Entradas) -> tuple[dict, dict, dict, dict]:
     conferidas = (validar_contra_dicionarios(tabela, entradas.dicionarios) if entradas.dicionarios is not None else None)
     conferir_contexto_uf(entradas.contexto_uf, sorted(set(ufs_08) | set(ufs_17)))
     j_feat = harmonizar_features(con, entradas.estratos, entradas.contexto_uf)
-    chaves_unicas = {**j08.pop("chaves_unicas"), **j17.pop("chaves_unicas"), **j_feat.pop("chaves_unicas")}
-    juncoes = {**j08, **j17, **j_feat, "chaves_unicas": chaves_unicas}
+    derivadas = construir_variaveis(con)
+    j_var = derivadas["juncoes"]
+    chaves_unicas = {**j08.pop("chaves_unicas"), **j17.pop("chaves_unicas"), **j_feat.pop("chaves_unicas"),
+                     **j_var.pop("chaves_unicas")}
+    juncoes = {**j08, **j17, **j_feat, **j_var, "chaves_unicas": chaves_unicas}
     chaves = chaves_edicao_uf(ufs_08, ufs_17)
     completas = chaves_completas(chaves)
     comuns = interseccao_chaves_domicilio(
@@ -138,7 +142,17 @@ def _construir(con, entradas: Entradas) -> tuple[dict, dict, dict, dict]:
                   "chaves_domicilio_prefixadas_em_comum": len(comuns)}
     crosswalk = {"conceitos": len(tabela["conceitos"]), "variaveis_conferidas_nos_dicionarios": conferidas,
                  "colunas_features_comuns": list(COLUNAS_FEATURES_COMUNS)}
-    return contagens, {"chaves": chaves, **integracao}, juncoes, crosswalk
+    return contagens, {"chaves": chaves, **integracao}, juncoes, {**crosswalk, "variaveis": derivadas["variaveis"]}
+
+
+def _gravar_variaveis(con, saida: Path) -> None:
+    """Matriz de entrada, variaveis nativas e identificadores/pesos em arquivos separados, na mesma ordem de linhas."""
+    for ano in ("2008", "2017"):
+        for prefixo in ("variaveis_nativas", "matriz_logistica", "identificadores"):
+            destino = saida / f"{prefixo}_{ano}.csv"
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            con.execute(f"COPY (SELECT * EXCLUDE (ordem) FROM {prefixo}_{ano} ORDER BY ordem) TO ? (FORMAT csv, HEADER)",
+                        [str(destino)])
 
 
 def executar(entradas: Entradas, saida: Path, selado: Path, referencias: Mapping[str, int] | None = None,
@@ -160,13 +174,15 @@ def executar(entradas: Entradas, saida: Path, selado: Path, referencias: Mapping
                                               for c in reprovadas))
         relatorio = {"contagens": contagens, "chaves_edicao_uf": integracao["chaves_edicao_uf"],
                      "chaves_domicilio_prefixadas_em_comum": integracao["chaves_domicilio_prefixadas_em_comum"],
-                     "juncoes": juncoes, "crosswalk": crosswalk, "conferencias": conferencias}
+                     "juncoes": juncoes, "crosswalk": {k: v for k, v in crosswalk.items() if k != "variaveis"},
+                     "variaveis": crosswalk["variaveis"], "conferencias": conferencias}
         con.execute("CREATE OR REPLACE TABLE chaves_edicao_uf(edicao VARCHAR, uf VARCHAR)")
         con.executemany("INSERT INTO chaves_edicao_uf VALUES (?, ?)", integracao["chaves"])
         escrever_csv(con, "e2_2008", saida / "e2_2008.csv", "episodio_id")
         escrever_csv(con, "chaves_edicao_uf", saida / "chaves_edicao_uf.csv", "edicao, uf")
         escrever_csv(con, "features_comuns_2008", saida / "features_comuns_2008.csv", "episodio_id")
         escrever_csv(con, "features_comuns_2017", saida / "features_comuns_2017.csv", "episodio_id")
+        _gravar_variaveis(con, saida)
         gravar_conjuntos_2017(con, saida, selado)
         con.close()
     escrever_json(relatorio, saida / "contagens.json")
