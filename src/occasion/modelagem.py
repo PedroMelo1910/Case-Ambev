@@ -7,6 +7,7 @@ Tudo aqui e funcao pura sobre arrays: nada le arquivo de dados. A leitura e a ex
 import hashlib
 import io
 import json
+import numbers
 import warnings
 from dataclasses import dataclass
 from itertools import combinations, permutations
@@ -16,8 +17,10 @@ import joblib
 import numpy as np
 import sklearn
 from scipy.stats import spearmanr
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import ConvergenceWarning, InconsistentVersionWarning
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,6 +29,16 @@ EPS = np.finfo(float).eps
 CASAS_EMPATE = 12
 ARTEFATOS_JSON = {"B0", "B1", "B2"}
 ARTEFATOS_JOBLIB = {"L", "G"}
+G_FIXOS = {"learning_rate": 0.05, "early_stopping": False, "l2_regularization": 0.0, "random_state": 20261114}
+# Metricas que nao descrevem desempenho de um preditor constante por construcao (protocolo 1.2, tratamento_b0).
+METRICAS_NAO_INTERPRETAVEIS_CONSTANTE = (
+    "auc_s", "ap_s", "auc_repeticoes", "auc_ic", "ap_ic",
+    "calibracao_s.inclinacao", "calibracao_ic.inclinacao", "calibracao_repeticoes.inclinacao")
+
+
+def arredondar(valores) -> np.ndarray:
+    """Precisao declarada e uniforme (CASAS_EMPATE) de toda comparacao de escore: empates, limiar t e corte b."""
+    return np.round(np.asarray(valores, dtype=float), CASAS_EMPATE)
 
 
 class ArtefatoInvalido(ValueError):
@@ -34,13 +47,16 @@ class ArtefatoInvalido(ValueError):
 
 @dataclass(frozen=True)
 class Dados:
-    """Matriz da logistica, alvo, grupos (UPA), celulas de B1/B2 e pesos W1 (None quando nao calculados)."""
+    """Matriz da logistica, alvo, grupos (UPA), celulas de B1/B2, pesos W1 e matriz nativa de G com sua mascara de
+    colunas categoricas (None quando nao calculados)."""
     x: np.ndarray
     y: np.ndarray
     grupos: np.ndarray
     cel_b1: np.ndarray
     cel_b2: np.ndarray
     w1: np.ndarray | None = None
+    x_g: np.ndarray | None = None
+    cat_g: np.ndarray | None = None
 
 
 def carregar_protocolo(caminho: Path) -> dict:
@@ -129,6 +145,56 @@ def ajustar_logistica(x: np.ndarray, y: np.ndarray, C: float, pesos: np.ndarray 
     return modelo
 
 
+# ---------- boosting (G) ----------
+
+def grade_boosting(grade: dict) -> list[tuple[int, int, int]]:
+    """(max_depth, max_iter, min_samples_leaf) do mais para o menos regularizado: profundidade e iteracoes crescentes,
+    folha minima decrescente. O desempate de `escolher_na_grade` fica com a primeira configuracao."""
+    return sorted(((d, i, f) for d in grade["max_depth"] for i in grade["max_iter"] for f in grade["min_samples_leaf"]),
+                  key=lambda c: (c[0], c[1], -c[2]))
+
+
+def codificar_nativas(linhas: list[dict], espec: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Matriz de G na ordem de `espec['colunas']`. Categoricas viram o indice do nivel na lista fixa da especificacao
+    (nada aprendido dos dados); ausente, nao numerico ou nivel desconhecido e erro, sem imputacao."""
+    categoricas = espec["categoricas"]
+    fora = set(categoricas) - set(espec["colunas"])
+    if fora:
+        raise ValueError(f"categoricas fora das colunas de G: {sorted(fora)}")
+    indices = {c: {nivel: i for i, nivel in enumerate(niveis)} for c, niveis in categoricas.items()}
+    x = np.empty((len(linhas), len(espec["colunas"])))
+    for i, linha in enumerate(linhas):
+        for j, coluna in enumerate(espec["colunas"]):
+            valor = linha.get(coluna)
+            if valor is None:
+                raise ValueError(f"linha {i}: {coluna} ausente (G recusa imputacao)")
+            if isinstance(valor, (bool, np.bool_)):
+                raise ValueError(f"linha {i}: {coluna} = {valor!r} e booleano, nao nivel nem numero")
+            if coluna in indices:
+                chave = valor.item() if isinstance(valor, np.generic) else valor
+                if not isinstance(chave, (str, int)) or chave not in indices[coluna]:
+                    raise ValueError(f"linha {i}: nivel {valor!r} desconhecido em {coluna}")
+                x[i, j] = indices[coluna][chave]
+            elif isinstance(valor, numbers.Real) and np.isfinite(valor):
+                x[i, j] = float(valor)
+            else:
+                raise ValueError(f"linha {i}: {coluna} = {valor!r} nao e numero finito")
+    return x, np.array([c in categoricas for c in espec["colunas"]])
+
+
+def ajustar_boosting(x: np.ndarray, y: np.ndarray, config: tuple[int, int, int],
+                     categoricas: np.ndarray) -> HistGradientBoostingClassifier:
+    """HistGradientBoosting com os valores fixos do protocolo; o binning das numericas e aprendido so em `x`.
+    O filtro de ConvergenceWarning segue o protocolo; o HGB nao o emite, e a convergencia e lida por `n_iter_`."""
+    profundidade, iteracoes, folha = config
+    modelo = HistGradientBoostingClassifier(max_depth=int(profundidade), max_iter=int(iteracoes),
+                                            min_samples_leaf=int(folha), categorical_features=categoricas, **G_FIXOS)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        modelo.fit(x, y)
+    return modelo
+
+
 def _pesos_divisao(dados: Dados, treino: np.ndarray, teste: np.ndarray, modo: str | None):
     """Pesos de ajuste (treino) e de perda (teste) para A1 ('w1') e A1t ('w1t'); aparo pelos percentis do treino."""
     if modo is None:
@@ -148,6 +214,10 @@ def ajustar(tipo: str, param, dados: Dados, treino: np.ndarray, colunas=None, mo
     if tipo in ("B1", "B2"):
         cel = dados.cel_b1 if tipo == "B1" else dados.cel_b2
         return ajustar_celulas(cel[treino], dados.y[treino], param)
+    if tipo == "G":
+        if dados.x_g is None or dados.cat_g is None or modo_peso is not None or colunas is not None:
+            raise ValueError("G exige x_g e cat_g e nao tem variante ponderada nem selecao de colunas")
+        return ajustar_boosting(dados.x_g[treino], dados.y[treino], param, dados.cat_g)
     x = dados.x if colunas is None else dados.x[:, colunas]
     w_tr, _ = _pesos_divisao(dados, treino, treino, modo_peso)
     return ajustar_logistica(x[treino], dados.y[treino], C=10.0 ** param, pesos=w_tr)
@@ -158,6 +228,10 @@ def prever(tipo: str, modelo, dados: Dados, indices: np.ndarray, colunas=None) -
         return np.full(len(indices), modelo["p0"])
     if tipo in ("B1", "B2"):
         return prever_celulas(modelo, (dados.cel_b1 if tipo == "B1" else dados.cel_b2)[indices])
+    if tipo == "G":
+        if colunas is not None:
+            raise ValueError("G nao tem selecao de colunas")
+        return modelo.predict_proba(dados.x_g[indices])[:, 1]
     x = dados.x if colunas is None else dados.x[:, colunas]
     return modelo.predict_proba(x[indices])[:, 1]
 
@@ -200,13 +274,16 @@ def perdas_internas(tipo: str, grade: list, dados: Dados, idx: np.ndarray, semen
 
 def validacao_cruzada(tipo: str, grade: list, dados: Dados, sementes_externas: list[int], semente_interna, n_dobras: int,
                       tolerancia: float, colunas=None, modo_peso: str | None = None) -> dict:
-    """Previsoes fora da dobra (R x n) com selecao do hiperparametro dentro de cada dobra externa."""
+    """Previsoes fora da dobra (R x n) com selecao do hiperparametro dentro de cada dobra externa, e a dobra externa de
+    teste de cada episodio em cada repeticao (R x n)."""
     n = len(dados.y)
     previsoes = np.full((len(sementes_externas), n), np.nan)
+    dobras = np.full((len(sementes_externas), n), -1)
     escolhas = []
     menor_k_interno = n
     for r, semente in enumerate(sementes_externas):
         for k, (treino, teste) in enumerate(particoes(dados.y, dados.grupos, n_dobras, semente)):
+            dobras[r, teste] = k
             if len(grade) > 1:
                 perdas, menor_k = perdas_internas(tipo, grade, dados, treino, semente_interna(r, k), n_dobras, colunas,
                                                   modo_peso)
@@ -217,7 +294,7 @@ def validacao_cruzada(tipo: str, grade: list, dados: Dados, sementes_externas: l
             escolhas.append(valor)
             modelo = ajustar(tipo, valor, dados, treino, colunas, modo_peso)
             previsoes[r, teste] = prever(tipo, modelo, dados, teste, colunas)
-    return {"previsoes": previsoes, "escolhas": escolhas, "menor_k_interno": menor_k_interno}
+    return {"previsoes": previsoes, "escolhas": escolhas, "menor_k_interno": menor_k_interno, "dobras": dobras}
 
 
 def selecao_repetida(tipo: str, grade: list, dados: Dados, idx: np.ndarray, sementes: list[int], n_dobras: int,
@@ -270,7 +347,7 @@ def escolher_modelo(medias: dict, ics: dict, ordem: list[str]) -> dict:
 # ---------- limiar, classes e metricas ----------
 
 def limiar_cobertura(s: np.ndarray, q: float, casas: int = CASAS_EMPATE) -> dict:
-    r = np.round(np.asarray(s, dtype=float), casas)
+    r = arredondar(s) if casas == CASAS_EMPATE else np.round(np.asarray(s, dtype=float), casas)
     valores, contagens = np.unique(r, return_counts=True)
     valores, contagens = valores[::-1], contagens[::-1]
     acumulada = np.cumsum(contagens) / len(r)
@@ -285,12 +362,14 @@ def limiar_cobertura(s: np.ndarray, q: float, casas: int = CASAS_EMPATE) -> dict
 def sinalizados(s: np.ndarray, t: float | None) -> np.ndarray:
     if t is None:
         return np.zeros(len(s), dtype=bool)
-    return np.round(np.asarray(s, dtype=float), CASAS_EMPATE) >= t
+    return arredondar(s) >= float(arredondar(t))
 
 
 def classes(s: np.ndarray, t30: float | None, b: float) -> np.ndarray:
-    alta = sinalizados(s, t30)
-    return np.where(alta, "alta", np.where(np.asarray(s) >= b, "media", "baixa"))
+    """alta (s >= t30), senao media (s >= b), senao baixa. s, t30 e b passam pelo mesmo arredondamento, para que um
+    preditor constante igual a b nao dependa de igualdade em ponto flutuante."""
+    r, corte = arredondar(s), float(arredondar(b))
+    return np.where(sinalizados(r, t30), "alta", np.where(r >= corte, "media", "baixa"))
 
 
 def metricas_no_limiar(y: np.ndarray, alta: np.ndarray) -> dict:
@@ -334,6 +413,65 @@ def calibracao(y: np.ndarray, p: np.ndarray, w: np.ndarray | None = None) -> dic
     if unico:
         return {"o_e": float(o_e[0]), "intercepto_no_todo": float(intercepto[0]), "inclinacao": float(inclinacao[0])}
     return {"o_e": o_e, "intercepto_no_todo": intercepto, "inclinacao": inclinacao}
+
+
+# ---------- leituras descritivas (protocolo 1.1) ----------
+
+def _distintos(p: np.ndarray) -> int:
+    return len(np.unique(np.round(np.asarray(p, dtype=float), CASAS_EMPATE)))
+
+
+def _resumo(valores: list[float]) -> dict:
+    if not valores:
+        return {"definidas": 0, "min": None, "mediana": None, "max": None}
+    return {"definidas": len(valores), "min": float(min(valores)), "mediana": float(np.median(valores)),
+            "max": float(max(valores))}
+
+
+def _validar_dobras(previsoes: np.ndarray, dobras: np.ndarray) -> None:
+    if previsoes.ndim != 2 or previsoes.shape != dobras.shape or previsoes.shape[0] == 0:
+        raise ValueError(f"previsoes {previsoes.shape} e dobras {dobras.shape} devem ser R x n iguais, R >= 1")
+    if (dobras < 0).any() or not np.isfinite(previsoes).all():
+        raise ValueError("episodio sem dobra externa ou previsao nao finita")
+
+
+def metricas_dentro_da_dobra(y: np.ndarray, previsoes: np.ndarray, dobras: np.ndarray) -> dict:
+    """Metricas em cada dobra externa de teste, cada uma com um unico modelo: nao misturam niveis de modelos diferentes,
+    ao contrario das agregadas. AUC e AP ficam indefinidas se a previsao e constante na dobra ou falta uma classe."""
+    _validar_dobras(previsoes, dobras)
+    perdas, brier, auc, ap, constantes, total = [], [], [], [], 0, 0
+    for r in range(previsoes.shape[0]):
+        for k in np.unique(dobras[r]):
+            sel = dobras[r] == k
+            p, yy = previsoes[r, sel], y[sel]
+            total += 1
+            perdas.append(perda_log(yy, p))
+            brier.append(float(brier_score_loss(yy, p)))
+            constante = _distintos(p) == 1
+            constantes += int(constante)
+            if not constante and 0 < yy.sum() < len(yy):
+                auc.append(float(roc_auc_score(yy, p)))
+                ap.append(float(average_precision_score(yy, p)))
+    return {"dobras": total, "dobras_constantes": constantes, "constante_por_construcao": constantes == total,
+            "log_loss": _resumo(perdas), "brier": _resumo(brier), "auc": _resumo(auc), "ap": _resumo(ap)}
+
+
+def leitura_preditor(previsoes: np.ndarray, dobras: np.ndarray, final: np.ndarray) -> dict:
+    """Constante por construcao = um unico valor em todas as dobras externas. Nesse caso o preditor nao ordena
+    contextos: AUC/AP agregadas, inclinacao de calibracao, limiar e classes fora da dobra refletem so diferencas de
+    nivel entre os modelos de cada dobra, e as classes nao demonstram diferenciacao contextual (False). Nao ser
+    constante so diz que ha ordenacao dentro da dobra; sua validade depende da avaliacao (None = nao decidido aqui)."""
+    _validar_dobras(previsoes, dobras)
+    constante = all(_distintos(previsoes[r, dobras[r] == k]) == 1
+                    for r in range(previsoes.shape[0]) for k in np.unique(dobras[r]))
+    distintos_final = _distintos(final)
+    nao_interpretavel = False if constante else None
+    return {"constante_por_construcao": constante, "produz_ordenacao_na_dobra": not constante,
+            "auc_ap_agregadas_interpretaveis": nao_interpretavel,
+            "inclinacao_calibracao_interpretavel": nao_interpretavel,
+            "limiar_e_classes_fora_da_dobra_interpretaveis": nao_interpretavel,
+            "classes_diferenciam_contexto": nao_interpretavel,
+            "modelo_final_constante": distintos_final == 1, "valores_distintos_modelo_final": distintos_final}
 
 
 # ---------- P5 ----------
@@ -397,13 +535,23 @@ def salvar_artefato(modelo, nome: str, pasta: Path, metadados: dict) -> Path:
 
 def carregar_artefato(caminho: Path, nome: str, sha256_esperado: str | None = None):
     """Carrega so artefatos deste pipeline. Le os bytes uma vez, confere o SHA-256 (o externo, se informado, prevalece
-    sobre o dos metadados) e a versao do scikit-learn, e so entao desserializa os mesmos bytes."""
+    sobre o dos metadados) e a versao do scikit-learn, e so entao desserializa os mesmos bytes.
+
+    Para joblib (pickle) o SHA-256 externo e obrigatorio: o `.meta.json` vizinho fica na mesma pasta do arquivo e quem
+    altera um altera o outro, entao so detecta corrupcao acidental. O hash esperado vem do manifesto de congelamento."""
     if nome not in ARTEFATOS_JSON | ARTEFATOS_JOBLIB:
         raise ArtefatoInvalido(f"nome de artefato invalido: {nome!r}")
     caminho = Path(caminho)
+    esperado_arquivo = f"{nome}.json" if nome in ARTEFATOS_JSON else f"{nome}.joblib"
+    if caminho.name != esperado_arquivo:
+        raise ArtefatoInvalido(f"{caminho.name}: nome de arquivo inesperado para o artefato {nome} ({esperado_arquivo})")
+    if nome in ARTEFATOS_JOBLIB and sha256_esperado is None:
+        raise ArtefatoInvalido(f"{caminho.name}: joblib exige SHA-256 esperado vindo do manifesto, nao so do .meta vizinho")
     try:
         meta = json.loads((caminho.parent / f"{nome}.meta.json").read_text(encoding="utf-8"))
         registrado, versao = meta["sha256"], meta["sklearn"]
+        if not isinstance(registrado, str) or not isinstance(versao, str):
+            raise ValueError("sha256 e sklearn devem ser texto")
     except (OSError, ValueError, KeyError) as erro:
         raise ArtefatoInvalido(f"{caminho.name}: metadados ausentes ou incompletos ({erro})") from erro
     conteudo = caminho.read_bytes()

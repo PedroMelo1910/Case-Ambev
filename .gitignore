@@ -12,6 +12,19 @@ data/raw/*
 *.novo
 artifacts/*
 !artifacts/.gitkeep
+# Excecoes especificas: so o necessario para a inferencia (manifesto, B0, L e seus metadados). O resto de
+# artifacts/ continua ignorado, inclusive os demais artefatos e o historico de auditoria da execucao.
+!artifacts/modelagem_2008/
+artifacts/modelagem_2008/*
+!artifacts/modelagem_2008/manifesto_congelamento_v1_3.json
+!artifacts/modelagem_2008/execucao_6/
+artifacts/modelagem_2008/execucao_6/*
+!artifacts/modelagem_2008/execucao_6/artefatos/
+artifacts/modelagem_2008/execucao_6/artefatos/*
+!artifacts/modelagem_2008/execucao_6/artefatos/B0.json
+!artifacts/modelagem_2008/execucao_6/artefatos/B0.meta.json
+!artifacts/modelagem_2008/execucao_6/artefatos/L.joblib
+!artifacts/modelagem_2008/execucao_6/artefatos/L.meta.json
 
 # Ambiente
 .venv/

@@ -1,0 +1,9 @@
+{
+ "protocolo_sha256": "9f1ddb7436b275c090bebb3d9fe6f018455abe6ef43488adfb3a87499685f17d",
+ "protocolo_versao": "1.2",
+ "treino": "2008-2009, 1.168 episodios",
+ "hiperparametro": -2.5,
+ "arquivo": "L.joblib",
+ "sha256": "f29ad9dd0ff8786c5a08a9384b4e0046458622b3727a92ea2d17c95cde36b75d",
+ "sklearn": "1.9.1"
+}

@@ -2,7 +2,10 @@
 
 Este modulo e o unico que o desenvolvimento de 2017 usa, e por isso nao importa o de 2008 (onde estao as
 listas de bebidas). Saidas: x_2017 (features, sem peso) vai para a pasta de trabalho; ids_pesos_2017
-(identificadores e pesos) vai para a pasta selada, somente leitura e fora da arvore de trabalho.
+(identificadores e pesos) vai para a pasta selada, marcada como somente leitura e fora da arvore de trabalho.
+
+O selo (chmod 0444/0555) protege contra ESCRITA, nao contra LEITURA: o arquivo continua legivel por qualquer processo
+do mesmo usuario. O controle de acesso e o fluxo da avaliacao temporal (`occasion.avaliacao_temporal`), nao o chmod.
 """
 
 import os
@@ -84,6 +87,31 @@ class SeloNaoAplicado(RuntimeError):
     """O sistema de arquivos ignorou o chmod: o conjunto selado continuaria gravavel."""
 
 
+class PastasSobrepostas(ValueError):
+    """Pasta de trabalho e pasta selada iguais, aninhadas ou em link simbolico: o selo atingiria o trabalho."""
+
+
+def _conferir_pastas(trabalho: Path, selado: Path) -> None:
+    for nome, pasta in (("trabalho", trabalho), ("selado", selado)):
+        if pasta.is_symlink():
+            raise PastasSobrepostas(f"pasta {nome} e um link simbolico: chmod, copia e conferencia seguiriam o alvo do link")
+    real_t, real_s = trabalho.resolve(), selado.resolve()
+    if real_t == real_s or real_s.is_relative_to(real_t) or real_t.is_relative_to(real_s):
+        raise PastasSobrepostas("pasta de trabalho e pasta selada devem ser distintas e sem aninhamento: o selo "
+                                "tornaria a pasta de trabalho somente leitura")
+
+
+def estado_do_selo(selado: Path) -> dict:
+    """O que o selo garante hoje. Serve para registrar, nunca para decidir acesso: leitura nao e bloqueada."""
+    selado = Path(selado)
+    arquivo = selado / ARQ_SELADO
+    protegido = arquivo.exists() and not (os.access(arquivo, os.W_OK) or os.access(selado, os.W_OK))
+    return {"protege_escrita": protegido, "bloqueia_leitura": False,
+            "legivel_por_este_processo": arquivo.exists() and os.access(arquivo, os.R_OK),
+            "observacao": ("chmod 0444 nao impede leitura; o controle de acesso e o fluxo da avaliacao temporal "
+                           "(autorizacao, manifesto, controles), nao o modo do arquivo")}
+
+
 def _selar(arquivo: Path, pasta: Path) -> None:
     os.chmod(arquivo, _MODO_ARQUIVO)
     os.chmod(pasta, _MODO_PASTA)
@@ -104,7 +132,7 @@ def _gravar_selado(con: duckdb.DuckDBPyConnection, selado: Path) -> str:
                 raise FileExistsError(f"{destino} ja esta selado com conteudo diferente; nao sera sobrescrito")
         else:
             selado.mkdir(parents=True, exist_ok=True)
-            parcial = destino.with_name(destino.name + ".parcial")
+            parcial = destino.with_name(f"{destino.name}.{os.getpid()}.parcial")  # nome por processo
             try:
                 shutil.copyfile(novo, parcial)
                 os.replace(parcial, destino)
@@ -115,7 +143,28 @@ def _gravar_selado(con: duckdb.DuckDBPyConnection, selado: Path) -> str:
     return hash_novo
 
 
-def gravar_conjuntos_2017(con: duckdb.DuckDBPyConnection, trabalho: Path, selado: Path) -> dict[str, str]:
-    """Grava x_2017.csv em `trabalho` e ids_pesos_2017.csv em `selado`; devolve {arquivo: sha256}."""
-    features = escrever_csv(con, "x_2017", Path(trabalho) / ARQ_FEATURES, "episodio_id")
-    return {ARQ_FEATURES: sha256_arquivo(features), ARQ_SELADO: _gravar_selado(con, Path(selado))}
+def _gravar_features(con: duckdb.DuckDBPyConnection, trabalho: Path, substituir: bool) -> str:
+    """Grava x_2017.csv sem sobrescrever em silencio um arquivo existente com conteudo diferente."""
+    destino = trabalho / ARQ_FEATURES
+    with tempfile.TemporaryDirectory() as tmp:
+        novo = escrever_csv(con, "x_2017", Path(tmp) / ARQ_FEATURES, "episodio_id")
+        hash_novo = sha256_arquivo(novo)
+        if destino.exists() and sha256_arquivo(destino) != hash_novo:
+            if not substituir:
+                raise FileExistsError(f"{destino} ja existe com conteudo diferente; nao sera sobrescrito "
+                                      "(remova o arquivo ou use substituir_features=True de forma deliberada)")
+        if not destino.exists() or sha256_arquivo(destino) != hash_novo:
+            trabalho.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(novo, destino)
+    return hash_novo
+
+
+def gravar_conjuntos_2017(con: duckdb.DuckDBPyConnection, trabalho: Path, selado: Path,
+                          substituir_features: bool = False) -> dict[str, str]:
+    """Grava x_2017.csv em `trabalho` e ids_pesos_2017.csv em `selado`; devolve {arquivo: sha256}.
+
+    Recusa pastas iguais, aninhadas ou em link simbolico, e conteudo diferente do ja gravado em qualquer dos dois
+    arquivos (o das features so se `substituir_features` for pedido de forma explicita)."""
+    trabalho, selado = Path(trabalho), Path(selado)
+    _conferir_pastas(trabalho, selado)
+    return {ARQ_FEATURES: _gravar_features(con, trabalho, substituir_features), ARQ_SELADO: _gravar_selado(con, selado)}

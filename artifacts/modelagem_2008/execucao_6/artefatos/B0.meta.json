@@ -1,0 +1,9 @@
+{
+ "protocolo_sha256": "9f1ddb7436b275c090bebb3d9fe6f018455abe6ef43488adfb3a87499685f17d",
+ "protocolo_versao": "1.2",
+ "treino": "2008-2009, 1.168 episodios",
+ "hiperparametro": null,
+ "arquivo": "B0.json",
+ "sha256": "0d7bf65c4fd1087226c82fd7124cb3f0bc4da03ffabedff1842f51df1f1e72d2",
+ "sklearn": "1.9.1"
+}
