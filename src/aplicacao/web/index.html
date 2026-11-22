@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avaliar uma ocasião · Oportunidade por contexto</title>
+  <link rel="preload" href="/recursos/manrope.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/estilo.css">
+  <script src="/app.js" defer></script>
+  <script src="/personas.js" defer></script>
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="ambiente" aria-hidden="true">
+    <img class="lata lata-1" src="/recursos/lata-guarana.webp" alt="" width="318" height="520" loading="lazy" decoding="async">
+    <img class="lata lata-2" src="/recursos/lata-guarana.webp" alt="" width="318" height="520" loading="lazy" decoding="async">
+    <img class="lata lata-3" src="/recursos/lata-guarana.webp" alt="" width="318" height="520" loading="lazy" decoding="async">
+    <svg class="folha folha-1" viewBox="0 0 40 24" width="40" height="24" focusable="false"><path d="M2 12C10 1 28 0 38 12C28 24 10 23 2 12Z" fill="#3f8a4b"/><path d="M4 12H34" stroke="#2c6b37" stroke-width="1.2" fill="none"/></svg>
+    <svg class="folha folha-2" viewBox="0 0 40 24" width="40" height="24" focusable="false"><path d="M2 12C10 1 28 0 38 12C28 24 10 23 2 12Z" fill="#5a9e52"/><path d="M4 12H34" stroke="#3a7a3c" stroke-width="1.2" fill="none"/></svg>
+    <svg class="folha folha-3" viewBox="0 0 40 24" width="40" height="24" focusable="false"><path d="M2 12C10 1 28 0 38 12C28 24 10 23 2 12Z" fill="#3f8a4b"/><path d="M4 12H34" stroke="#2c6b37" stroke-width="1.2" fill="none"/></svg>
+  </div>
+
+  <header class="topo">
+    <div class="topo-interno">
+      <a id="marca" class="marca" href="#avaliar">
+        <span class="fruto">
+          <svg class="fruto-svg" viewBox="0 0 64 64" width="44" height="44" aria-hidden="true" focusable="false">
+            <defs>
+              <radialGradient id="g-casca" cx="0.38" cy="0.34" r="0.75">
+                <stop offset="0" stop-color="#f2614a"/><stop offset="0.55" stop-color="#cf2f24"/><stop offset="1" stop-color="#8e1715"/>
+              </radialGradient>
+              <radialGradient id="g-polpa" cx="0.42" cy="0.38" r="0.7">
+                <stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#f6f0e3"/><stop offset="1" stop-color="#dcd0b8"/>
+              </radialGradient>
+              <radialGradient id="g-semente" cx="0.36" cy="0.32" r="0.75">
+                <stop offset="0" stop-color="#5a3e2e"/><stop offset="0.6" stop-color="#22160f"/><stop offset="1" stop-color="#0b0705"/>
+              </radialGradient>
+            </defs>
+            <g class="fruto-folha"><path d="M35 15C38 6 48 3 56 6C53 14 44 18 35 15Z" fill="#3c8a45"/><path d="M36 14.5C42 11 48 8.5 54 7" stroke="#26632e" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>
+            <g class="fruto-corpo">
+              <path class="fruto-casca" d="M32 13C45 13 54 23 54 36C54 48 44 58 32 58C20 58 10 48 10 36C10 23 19 13 32 13Z" fill="url(#g-casca)"/>
+              <path d="M32 13C34 14 35 16 35 17" stroke="#6f1210" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+              <g class="fruto-abertura">
+                <path d="M21 31C21 23 26 19 33 19C40 19 44 24 44 31C44 40 39 46 32 46C25 46 21 40 21 31Z" fill="#8a1714" transform="rotate(-10 32 32)"/>
+                <path class="fruto-polpa" d="M22.6 31C22.6 24.4 26.8 20.8 32.6 20.8C38.6 20.8 42.4 25 42.4 31C42.4 39 38 44.4 32 44.4C26 44.4 22.6 39 22.6 31Z" fill="url(#g-polpa)" transform="rotate(-10 32 32)"/>
+                <circle class="fruto-semente" cx="33.2" cy="29.4" r="6.6" fill="url(#g-semente)"/>
+                <circle cx="31" cy="27.2" r="1.8" fill="#ffffff" opacity="0.7"/>
+                <path d="M23 25C25 21 29 19.6 33 19.6" stroke="#f08a78" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.8"/>
+              </g>
+            </g>
+          </svg>
+        </span>
+        <span class="marca-nome">Oportunidade por contexto</span>
+      </a>
+      <nav id="navegacao" class="navegacao" aria-label="Ferramentas">
+        <ul class="navegacao-lista" role="list">
+          <li><a class="navegacao-link" href="#avaliar" aria-current="page">Ocasiões</a></li>
+          <li><a class="navegacao-link" href="#personas">Personas</a></li>
+        </ul>
+      </nav>
+      <div class="topo-extra">
+        <button type="button" id="pausar-fundo" class="pausar-fundo" aria-pressed="false">Pausar animação</button>
+        <img id="logo" class="logo" alt="Ambev" width="92" height="28" hidden>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo" tabindex="-1">
+    <p id="anuncio" class="visualmente-oculto" role="status"></p>
+    <p id="anuncio-empresa" class="visualmente-oculto" role="status"></p>
+    <nav id="secoes" class="secoes" aria-label="Seções de Ocasiões">
+      <a href="#avaliar" aria-current="page">Avaliar uma ocasião</a>
+      <a href="#empresa">Dados da empresa</a>
+      <a href="#como">Como funciona</a>
+    </nav>
+
+    <section id="avaliar" class="secao" aria-labelledby="titulo-avaliar">
+      <div class="abertura">
+        <h1 id="titulo-avaliar" tabindex="-1">Onde o guaraná mais acompanha a pizza?</h1>
+        <p class="lead">Escolha dia, período e região e compare com o habitual.</p>
+      </div>
+
+      <form id="formulario" class="formulario superficie" novalidate>
+        <fieldset class="grupo">
+          <legend>Base da estimativa</legend>
+          <div class="opcoes-base">
+            <div class="opcao-base">
+              <input type="radio" id="base-historica" name="base" value="historica" checked>
+              <label for="base-historica"><strong>Dados públicos históricos</strong><span>POF 2008–2009, IBGE</span></label>
+            </div>
+            <div class="opcao-base">
+              <input type="radio" id="base-empresa" name="base" value="empresa" disabled>
+              <label for="base-empresa"><strong>Modelo da empresa</strong><span id="base-empresa-nota">Disponível depois de treinar um modelo com seus dados</span></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="grupo">
+          <legend>Quando e onde</legend>
+          <div class="campos">
+            <div class="campo">
+              <label for="dia_semana">Dia da semana</label>
+              <select id="dia_semana" name="dia_semana"></select>
+            </div>
+            <div class="campo">
+              <label for="periodo">Período</label>
+              <select id="periodo" name="periodo"></select>
+            </div>
+            <div class="campo">
+              <label for="grande_regiao">Região</label>
+              <select id="grande_regiao" name="grande_regiao"></select>
+            </div>
+            <div class="campo" data-base="historica">
+              <label for="area">Tipo de área</label>
+              <select id="area" name="area"></select>
+            </div>
+            <div class="campo" data-base="empresa" data-campo="canal" hidden>
+              <label for="canal">Canal</label>
+              <select id="canal" name="canal"></select>
+            </div>
+            <div class="campo" data-base="empresa" data-campo="preco" hidden>
+              <label for="preco">Preço (R$)</label>
+              <input type="number" id="preco" name="preco" min="0" step="0.01" value="50" inputmode="decimal">
+            </div>
+            <div class="campo" data-base="empresa" data-campo="temperatura" hidden>
+              <label for="temperatura">Temperatura prevista (°C)</label>
+              <input type="number" id="temperatura" name="temperatura" step="0.5" value="24" inputmode="decimal">
+            </div>
+            <div class="campo" data-base="empresa" data-campo="promocao" hidden>
+              <label for="promocao">Promoção no pedido</label>
+              <select id="promocao" name="promocao">
+                <option value="0">Sem promoção</option>
+                <option value="1">Com promoção</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="grupo" data-base="historica">
+          <legend>Público <span class="opcional">(opcional)</span></legend>
+          <div class="campos campos-publico">
+            <div class="campo">
+              <label for="faixa_etaria">Faixa etária</label>
+              <select id="faixa_etaria" name="faixa_etaria"></select>
+            </div>
+            <div class="campo">
+              <label for="sexo">Sexo</label>
+              <select id="sexo" name="sexo"></select>
+            </div>
+            <div class="campo">
+              <label for="escolaridade">Escolaridade</label>
+              <select id="escolaridade" name="escolaridade"></select>
+            </div>
+          </div>
+        </fieldset>
+
+        <div id="resumo-erros" class="caixa caixa-erro" tabindex="-1" hidden></div>
+        <div class="acao">
+          <button type="submit" id="avaliar-botao" class="botao botao-primario">Avaliar ocasião</button>
+        </div>
+      </form>
+
+      <section id="resultado" class="resultado superficie" aria-labelledby="titulo-resultado">
+        <h2 id="titulo-resultado" class="resultado-titulo">Resultado</h2>
+        <div id="falha" class="caixa caixa-erro" role="alert" hidden></div>
+        <div id="estado-vazio" class="estado-vazio">
+          <p>Nenhuma ocasião avaliada ainda.</p>
+        </div>
+        <div id="conteudo-resultado" hidden>
+          <p id="desatualizado" class="desatualizado" hidden>A ocasião mudou. Avalie de novo para atualizar o resultado.</p>
+          <div class="veredito">
+            <p id="cenario" class="cenario"></p>
+            <p id="faixa" class="faixa"></p>
+            <p id="linha-medida" class="linha-medida"></p>
+            <p id="leitura" class="leitura"></p>
+            <ul id="motivos" class="motivos" role="list" aria-label="Motivos da evidência insuficiente" hidden></ul>
+            <p id="base-estimativa" class="base-estimativa"></p>
+          </div>
+          <p id="exploratorio" class="nota-exploratoria" hidden><strong>Estimativa exploratória.</strong> <span id="exploratorio-texto"></span></p>
+
+          <dl class="numeros">
+            <div class="numero numero-principal"><dt>Estimativa para a ocasião</dt><dd id="num-estimativa"></dd></div>
+            <div class="numero"><dt>Referência habitual</dt><dd id="num-habitual"></dd></div>
+            <div class="numero"><dt>Diferença para o habitual</dt><dd id="num-diferenca"></dd></div>
+          </dl>
+          <div class="regua" aria-hidden="true">
+            <div class="regua-trilho">
+              <span id="regua-intervalo" class="regua-intervalo"></span>
+              <span id="regua-habitual" class="regua-marca regua-marca-habitual"></span>
+              <span id="regua-estimativa" class="regua-marca regua-marca-estimativa"></span>
+            </div>
+            <div class="regua-escala"><span>0%</span><span id="regua-maximo"></span></div>
+            <div class="regua-legenda"><span class="chave chave-estimativa">Estimativa</span><span class="chave chave-habitual">Habitual</span><span id="chave-intervalo" class="chave chave-intervalo"></span></div>
+          </div>
+
+          <dl class="fatos">
+            <div><dt>Incerteza</dt><dd id="incerteza"></dd></div>
+            <div><dt>Suporte</dt><dd id="base-resumo"></dd></div>
+          </dl>
+
+          <div class="leituras">
+            <div class="bloco">
+              <h3>O que pesou na estimativa</h3>
+              <ul id="fatores" class="fatores" role="list"></ul>
+              <p class="dica">Cada campo é comparado com a média dos seus valores no mesmo modelo. É associação, não efeito.</p>
+            </div>
+            <div class="bloco">
+              <h3>Sugestão por regra</h3>
+              <p id="categoria" class="categoria"></p>
+              <p id="proximo-passo" class="proximo-passo"></p>
+              <p id="justificativa" class="dica"></p>
+            </div>
+          </div>
+
+          <details class="detalhes">
+            <summary>Método, fonte e limites</summary>
+            <h3>Limites</h3>
+            <ul id="avisos" class="avisos"></ul>
+            <h3>Evidência no treino</h3>
+            <dl id="suporte" class="pares"></dl>
+            <h3>Modelo</h3>
+            <dl id="detalhes" class="pares"></dl>
+          </details>
+        </div>
+      </section>
+    </section>
+
+    <section id="empresa" class="secao" aria-labelledby="titulo-empresa" hidden>
+      <div class="abertura">
+        <h1 id="titulo-empresa" tabindex="-1">Dados da empresa</h1>
+        <p class="lead">Treine a estimativa com pedidos reais. Os dados ficam só nesta máquina.</p>
+      </div>
+
+      <ol class="passos" role="list">
+        <li class="passo" id="passo-arquivo">
+          <h2 tabindex="-1"><span class="passo-numero" aria-hidden="true">1</span> Arquivo</h2>
+          <div class="passo-corpo">
+            <p>Formato CSV, uma linha por pedido ou ocasião, sem nome, documento ou contato de clientes.</p>
+            <div class="linha-acoes">
+              <div class="campo campo-arquivo">
+                <label for="arquivo">Arquivo CSV</label>
+                <input type="file" id="arquivo" accept=".csv,text/csv">
+              </div>
+              <a class="botao botao-secundario" href="/api/empresa/exemplo.csv" download>Baixar exemplo de estrutura</a>
+            </div>
+            <div id="envio-erro" class="caixa caixa-erro" role="alert" hidden></div>
+            <div class="rolagem-tabela">
+              <table class="tabela tabela-formato" aria-label="Colunas esperadas">
+                <thead><tr><th scope="col">Coluna</th><th scope="col">Conteúdo</th></tr></thead>
+                <tbody id="formato-colunas"></tbody>
+              </table>
+            </div>
+          </div>
+        </li>
+
+        <li class="passo" id="passo-colunas" hidden>
+          <h2 tabindex="-1"><span class="passo-numero" aria-hidden="true">2</span> Prévia e colunas</h2>
+          <div class="passo-corpo">
+            <p id="previa-resumo"></p>
+            <div class="rolagem-tabela" tabindex="0" role="group" aria-label="Prévia do arquivo, com rolagem horizontal"><table class="tabela tabela-compacta" id="previa"></table></div>
+            <div class="campo campo-largo">
+              <label for="tipo_de_registro">O que cada linha representa</label>
+              <select id="tipo_de_registro"></select>
+            </div>
+            <div id="mapeamento" class="campos campos-mapa"></div>
+            <fieldset class="grupo">
+              <legend>Informações conhecidas antes da ocasião</legend>
+              <p class="dica">Marque só o que se sabe antes de o consumidor decidir. O resto fica fora do modelo.</p>
+              <div id="conhecidos" class="marcadores"></div>
+            </fieldset>
+            <button type="button" id="diagnosticar" class="botao botao-primario">Verificar arquivo</button>
+          </div>
+        </li>
+
+        <li class="passo" id="passo-diagnostico" hidden>
+          <h2 tabindex="-1"><span class="passo-numero" aria-hidden="true">3</span> Diagnóstico e plano</h2>
+          <div class="passo-corpo">
+            <div id="diagnostico"></div>
+            <button type="button" id="treinar" class="botao botao-primario" hidden>Iniciar treino</button>
+          </div>
+        </li>
+
+        <li class="passo" id="passo-treino" hidden>
+          <h2 tabindex="-1"><span class="passo-numero" aria-hidden="true">4</span> Treino</h2>
+          <div class="passo-corpo">
+            <ul id="etapas" class="etapas" role="list"></ul>
+            <div id="treino-resultado"></div>
+            <button type="button" id="disponibilizar" class="botao botao-primario" hidden>Usar este modelo para avaliar ocasiões</button>
+            <p id="disponibilizado" class="caixa caixa-ok" hidden></p>
+            <div id="disponibilizar-erro" class="caixa caixa-erro" role="alert" hidden></div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="como" class="secao" aria-labelledby="titulo-como" hidden>
+      <div class="abertura">
+        <h1 id="titulo-como" tabindex="-1">Como funciona</h1>
+        <p class="lead">Compara um cenário com o habitual e mostra quanto os dados sustentam a comparação. Não prevê vendas.</p>
+      </div>
+      <div class="topicos">
+        <div class="topico">
+          <h2>O que é estimado</h2>
+          <div>
+            <p>Entre ocasiões com pizza, a chance de o guaraná acompanhar a pizza no mesmo consumo ou pedido. Não é a chance de alguém escolher pizza, nem uma previsão de vendas.</p>
+          </div>
+        </div>
+        <div class="topico">
+          <h2>O que é o habitual</h2>
+          <div>
+            <p>A taxa média de guaraná entre todas as ocasiões com pizza usadas no treino. Na base histórica, 101 de 1.168 ocasiões registradas na POF 2008–2009. Com dados da empresa, a taxa do período de treino.</p>
+          </div>
+        </div>
+        <div class="topico">
+          <h2>Acima, abaixo ou sem diferença demonstrada</h2>
+          <div>
+            <p>O modelo é reajustado em 1.000 reamostras dos dados. Se a faixa de incerteza de 95% da diferença fica toda acima de zero, o cenário aparece acima do habitual; toda abaixo, abaixo. Se a faixa inclui zero, não há diferença demonstrada, o que não significa que a chance seja igual à habitual.</p>
+          </div>
+        </div>
+        <div class="topico">
+          <h2>Evidência insuficiente</h2>
+          <div>
+            <p>É a resposta quando há menos de 30 ocasiões (ou menos de 3 com guaraná) no treino na célula contada, quando a incerteza não pode ser medida ou quando o resultado é instável. A resposta diz quais campos a contagem considera e quais escolhas ela não filtra. Atingir o mínimo não garante confiabilidade.</p>
+          </div>
+        </div>
+        <div class="topico">
+          <h2>Limites</h2>
+          <div>
+            <ul>
+              <li>Maior associação não comprova maior volume de vendas nem efeito de campanha.</li>
+              <li>A POF registra consumo, não pedidos, preço, canal ou marca. Clima, feriado e data não existem nessa fonte e por isso não aparecem no formulário.</li>
+              <li>Nos dados históricos, nenhum modelo por contexto superou a taxa habitual com segurança. A estimativa por contexto é exploratória.</li>
+              <li>A versão atual foi avaliada só com 2008–2009, depois de uma avaliação anterior com 2017–2018: não é um teste independente.</li>
+              <li>Avaliar muitos cenários aumenta a chance de algum aparecer acima do habitual por acaso.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="personas" class="secao" aria-labelledby="titulo-personas" hidden>
+      <div class="abertura">
+        <h1 id="titulo-personas" tabindex="-1">Personas</h1>
+        <p class="lead">Converse com um perfil simulado sobre pizza e guaraná.</p>
+      </div>
+
+      <div class="superficie conversa-painel">
+        <div class="conversa-topo">
+          <fieldset class="persona-escolha">
+            <legend class="visualmente-oculto">Com quem você quer conversar?</legend>
+            <input type="radio" id="persona-pai" name="persona" value="pai_de_familia" checked>
+            <label for="persona-pai">Pai de família</label>
+            <input type="radio" id="persona-jovem" name="persona" value="jovem_sozinho">
+            <label for="persona-jovem">Jovem que mora sozinho</label>
+          </fieldset>
+          <button type="button" id="nova-conversa" class="conversa-recomecar">Nova conversa</button>
+        </div>
+        <div id="conversa" class="conversa" role="log" aria-live="polite" aria-label="Conversa com a persona"></div>
+        <div id="conversa-erro" class="caixa caixa-erro" role="alert" hidden></div>
+        <p id="conversa-status" class="visualmente-oculto" role="status"></p>
+        <div id="conversa-sugestoes" class="sugestoes" role="group" aria-label="Sugestões de mensagem">
+          <button type="button" class="sugestao">Você pediria guaraná com a pizza numa sexta à noite em São Paulo capital?</button>
+          <button type="button" class="sugestao">Que combo chamaria sua atenção?</button>
+        </div>
+        <form id="conversa-formulario" class="conversa-formulario">
+          <label for="mensagem" class="visualmente-oculto">Sua mensagem</label>
+          <input type="text" id="mensagem" name="mensagem" maxlength="500" autocomplete="off" placeholder="Escreva sua mensagem…">
+          <button type="submit" id="enviar" class="botao botao-primario">Enviar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p>Projeto acadêmico do Inteli · não é um produto oficial da Ambev</p>
+    <details class="creditos">
+      <summary>Créditos</summary>
+      <p>Lata: foto de Cabeza2000, Wikimedia Commons, CC BY-SA 4.0 (recortada). Marca Guaraná Antarctica da Ambev.</p>
+    </details>
+  </footer>
+</body>
+</html>

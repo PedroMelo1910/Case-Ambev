@@ -1,0 +1,83 @@
+{
+ "versao": "personas_rede_v1",
+ "largura": 16,
+ "padronizador": {
+  "media": [
+   1.552337884902954,
+   1.4101561307907104,
+   6.095887184143066
+  ],
+  "desvio": [
+   0.36191442608833313,
+   1.4345320463180542,
+   0.9754797220230103
+  ]
+ },
+ "features": {
+  "categoricas": {
+   "grande_regiao": [
+    "Norte",
+    "Nordeste",
+    "Centro-Oeste",
+    "Sudeste",
+    "Sul"
+   ],
+   "area": [
+    "capital",
+    "urbano_nao_capital",
+    "rural"
+   ],
+   "faixa_etaria": [
+    "10_17",
+    "18_29",
+    "30_44",
+    "45_59",
+    "60_mais"
+   ],
+   "sexo": [
+    "masculino",
+    "feminino"
+   ],
+   "escolaridade": [
+    "ate_fundamental",
+    "medio",
+    "superior"
+   ],
+   "periodo": [
+    "manha",
+    "almoco",
+    "tarde",
+    "noite"
+   ]
+  },
+  "binarias": [
+   "fim_de_semana",
+   "noite"
+  ],
+  "numericas": [
+   "log_moradores",
+   "n_menores",
+   "log_renda_pc"
+  ]
+ },
+ "treino": {
+  "semente": 20261122,
+  "dobras": 5,
+  "epocas_comida": 8,
+  "epocas_bebida": 300,
+  "lote": 4096,
+  "decaimento": 0.01,
+  "taxa": 0.01,
+  "torch": "2.9.0+cpu"
+ },
+ "contagens": {
+  "episodios_com_comida": 253935,
+  "episodios_com_pizza": 1168,
+  "pizza_com_guarana": 101
+ },
+ "bebida_historica": {
+  "guarana": 101,
+  "outro_refrigerante": 554,
+  "sem_refrigerante": 513
+ }
+}
