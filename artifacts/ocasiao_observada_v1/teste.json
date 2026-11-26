@@ -1,0 +1,618 @@
+{
+ "versao": "ocasiao_observada_v1",
+ "aberto_uma_vez": true,
+ "spec_escolhida": {
+  "familia": "dois_passos",
+  "bloco": "B123",
+  "C": 0.1
+ },
+ "spec_referencia": {
+  "familia": "dia_periodo",
+  "m": 1000
+ },
+ "metricas": {
+  "escolhido": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0033309108912236178,
+   "brier": 0.00042303109359725027,
+   "pr_auc": 0.003714953645955656,
+   "roc_auc": 0.8631581240143931,
+   "captura_20": 0.7407407407407407,
+   "positivos_capturados_20": 20.0,
+   "precisao_20": 0.001567594682718836,
+   "lift_20": 3.7037037037037033,
+   "f1_20": 0.003128568523472085,
+   "matriz_confusao_20": {
+    "vp": 20.0,
+    "fp": 12738.400000000001,
+    "fn": 7.0,
+    "vn": 51026.6
+   },
+   "calibracao": {
+    "ece": 0.00029209130100683016,
+    "por_decil": [
+     {
+      "previsto": 1.087397442815994e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 2.4386513835442646e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 4.147004262698167e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 6.146238419956443e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 8.641603730691622e-05,
+      "observado": 0.00031352876626430476,
+      "n": 6379,
+      "positivos": 2
+     },
+     {
+      "previsto": 0.00012189254821739401,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00018404469372964818,
+      "observado": 0.00015676438313215238,
+      "n": 6379,
+      "positivos": 1
+     },
+     {
+      "previsto": 0.0003530892180225136,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.0010197104469055582,
+      "observado": 0.0007838219156607619,
+      "n": 6379,
+      "positivos": 5
+     },
+     {
+      "previsto": 0.004248129459873818,
+      "observado": 0.0023514657469822856,
+      "n": 6379,
+      "positivos": 15
+     }
+    ],
+    "observado_sobre_esperado": 0.6880681985403354
+   }
+  },
+  "global": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0037483858868861885,
+   "brier": 0.0004231131456451666,
+   "pr_auc": 0.00042325056433408577,
+   "roc_auc": 0.5,
+   "captura_20": 0.2,
+   "positivos_capturados_20": 5.4,
+   "precisao_20": 0.00042325056433408577,
+   "lift_20": 1.0,
+   "f1_20": 0.0008447135013374631,
+   "matriz_confusao_20": {
+    "vp": 5.4,
+    "fp": 12753.000000000002,
+    "fn": 21.6,
+    "vn": 51012.0
+   },
+   "calibracao": {
+    "ece": 0.00020426049860445915,
+    "por_decil": [
+     {
+      "previsto": 0.0006275110629385448,
+      "observado": 0.0006269592476489029,
+      "n": 6380,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.0006275110629385448,
+      "observado": 0.0006269592476489029,
+      "n": 6380,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.00031352876626430476,
+      "n": 6379,
+      "positivos": 2
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0004702931493964571,
+      "n": 6379,
+      "positivos": 3
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.00031352876626430476,
+      "n": 6379,
+      "positivos": 2
+     },
+     {
+      "previsto": 0.000627511062938545,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     }
+    ],
+    "observado_sobre_esperado": 0.6744909999706838
+   }
+  },
+  "dia_periodo": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.003356862518440292,
+   "brier": 0.00042295112885243997,
+   "pr_auc": 0.0019130578825416029,
+   "roc_auc": 0.8614379768304335,
+   "captura_20": 0.7744660812014765,
+   "positivos_capturados_20": 20.910584192439867,
+   "precisao_20": 0.001638966029630664,
+   "lift_20": 3.872330406007382,
+   "f1_20": 0.0032710097755940153,
+   "matriz_confusao_20": {
+    "vp": 20.910584192439867,
+    "fp": 12737.489415807562,
+    "fn": 6.089415807560133,
+    "vn": 51027.51058419244
+   },
+   "calibracao": {
+    "ece": 0.0002843581836362525,
+    "por_decil": [
+     {
+      "previsto": 4.4469790214582494e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 4.922941239524838e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 6.312426509562227e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00010485179387195349,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00012503729304676103,
+      "observado": 0.00015676438313215238,
+      "n": 6379,
+      "positivos": 1
+     },
+     {
+      "previsto": 0.0001331560315234248,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00023269599909514943,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.000675132899327327,
+      "observado": 0.0009405862987929142,
+      "n": 6379,
+      "positivos": 6
+     },
+     {
+      "previsto": 0.001447457045507199,
+      "observado": 0.0015676438313215238,
+      "n": 6379,
+      "positivos": 10
+     },
+     {
+      "previsto": 0.00336640556589556,
+      "observado": 0.0015676438313215238,
+      "n": 6379,
+      "positivos": 10
+     }
+    ],
+    "observado_sobre_esperado": 0.678136286208344
+   }
+  }
+ },
+ "incerteza_bootstrap_upa": {
+  "escolhido": {
+   "perda_log": [
+    0.002180885093222866,
+    0.004830252315665718
+   ],
+   "pr_auc": [
+    0.00161660607189352,
+    0.0105298865448799
+   ],
+   "captura_20": [
+    0.5184343434343434,
+    0.9565670289855073
+   ]
+  },
+  "global": {
+   "perda_log": [
+    0.0024820785121544508,
+    0.005439228755062482
+   ],
+   "pr_auc": [
+    0.00025150412473819313,
+    0.0006525758042561111
+   ],
+   "captura_20": [
+    0.19999999999999998,
+    0.20000000000000004
+   ]
+  },
+  "dia_periodo": {
+   "perda_log": [
+    0.0022379220974858434,
+    0.004809766519336288
+   ],
+   "pr_auc": [
+    0.001002720477992955,
+    0.003943541525940979
+   ],
+   "captura_20": [
+    0.6056901491327729,
+    0.9225778245785632
+   ]
+  },
+  "diferencas_contra_dia_periodo": {
+   "escolhido": {
+    "perda_log": [
+     -0.00020843145240415792,
+     0.0001966591643005187
+    ],
+    "pr_auc": [
+     0.00023948375572870607,
+     0.007756935908429346
+    ],
+    "captura_20": [
+     -0.22890557297157668,
+     0.14595571923818057
+    ]
+   },
+   "global": {
+    "perda_log": [
+     0.00018358519222073263,
+     0.0006752852301924875
+    ],
+    "pr_auc": [
+     -0.0034039649972003793,
+     -0.0006956503689199887
+    ],
+    "captura_20": [
+     -0.7225778245785632,
+     -0.4056901491327729
+    ]
+   }
+  }
+ },
+ "segmentos": {
+  "periodo": {
+   "almoco": {
+    "n": 18308,
+    "positivos": 0,
+    "taxa_observada": 0.0,
+    "instavel": true,
+    "previsto_escolhido": 6.446403983764106e-05,
+    "previsto_dia_periodo": 9.325574730669107e-05
+   },
+   "manha": {
+    "n": 17462,
+    "positivos": 1,
+    "taxa_observada": 5.7267208796243274e-05,
+    "instavel": true,
+    "previsto_escolhido": 7.836480564832779e-05,
+    "pr_auc_escolhido": 0.0020833333333333333,
+    "previsto_dia_periodo": 0.00011268084003150621,
+    "pr_auc_dia_periodo": 8.462384700008462e-05
+   },
+   "noite": {
+    "n": 16102,
+    "positivos": 26,
+    "taxa_observada": 0.0016147062476710968,
+    "instavel": true,
+    "previsto_escolhido": 0.0021170857080471885,
+    "pr_auc_escolhido": 0.003923433024137204,
+    "previsto_dia_periodo": 0.0020553359112276525,
+    "pr_auc_dia_periodo": 0.001960142286661259
+   },
+   "tarde": {
+    "n": 11920,
+    "positivos": 0,
+    "taxa_observada": 0.0,
+    "instavel": true,
+    "previsto_escolhido": 0.00021831949435957324,
+    "previsto_dia_periodo": 0.00025545534047856957
+   }
+  },
+  "grande_regiao": {
+   "Centro-Oeste": {
+    "n": 7389,
+    "positivos": 6,
+    "taxa_observada": 0.0008120178643930166,
+    "instavel": true,
+    "previsto_escolhido": 0.0006386004830821663,
+    "pr_auc_escolhido": 0.006056606665108493,
+    "previsto_dia_periodo": 0.0006411390146779139,
+    "pr_auc_dia_periodo": 0.0031681517134579057
+   },
+   "Nordeste": {
+    "n": 21824,
+    "positivos": 9,
+    "taxa_observada": 0.0004123900293255132,
+    "instavel": true,
+    "previsto_escolhido": 0.0005775577313091606,
+    "pr_auc_escolhido": 0.014817683579090248,
+    "previsto_dia_periodo": 0.0006048876568946739,
+    "pr_auc_dia_periodo": 0.0032277616548168197
+   },
+   "Norte": {
+    "n": 9421,
+    "positivos": 7,
+    "taxa_observada": 0.0007430209107313449,
+    "instavel": true,
+    "previsto_escolhido": 0.0004295703790095647,
+    "pr_auc_escolhido": 0.0065361428692839105,
+    "previsto_dia_periodo": 0.0006467520231318694,
+    "pr_auc_dia_periodo": 0.0027226272103963627
+   },
+   "Sudeste": {
+    "n": 16894,
+    "positivos": 5,
+    "taxa_observada": 0.00029596306380963656,
+    "instavel": true,
+    "previsto_escolhido": 0.0006367202916048518,
+    "pr_auc_escolhido": 0.0014708202876248827,
+    "previsto_dia_periodo": 0.0006292831896508981,
+    "pr_auc_dia_periodo": 0.0013429966312980992
+   },
+   "Sul": {
+    "n": 8264,
+    "positivos": 0,
+    "taxa_observada": 0.0,
+    "instavel": true,
+    "previsto_escolhido": 0.000860760198053467,
+    "previsto_dia_periodo": 0.000623475330590658
+   }
+  },
+  "area": {
+   "capital": {
+    "n": 13279,
+    "positivos": 10,
+    "taxa_observada": 0.0007530687551773477,
+    "instavel": true,
+    "previsto_escolhido": 0.0009117576070250304,
+    "pr_auc_escolhido": 0.014187200681190964,
+    "previsto_dia_periodo": 0.0006158191107688591,
+    "pr_auc_dia_periodo": 0.007036828611960552
+   },
+   "rural": {
+    "n": 14642,
+    "positivos": 4,
+    "taxa_observada": 0.0002731867231252561,
+    "instavel": true,
+    "previsto_escolhido": 0.00013843162089185784,
+    "pr_auc_escolhido": 0.0008720849588888357,
+    "previsto_dia_periodo": 0.0006087660367838014,
+    "pr_auc_dia_periodo": 0.0011248234141789935
+   },
+   "urbano_nao_capital": {
+    "n": 35871,
+    "positivos": 13,
+    "taxa_observada": 0.00036240974603440104,
+    "instavel": true,
+    "previsto_escolhido": 0.0006999010695139978,
+    "pr_auc_escolhido": 0.0014545514365720024,
+    "previsto_dia_periodo": 0.0006334919926660863,
+    "pr_auc_dia_periodo": 0.0012576623986393677
+   }
+  },
+  "faixa_etaria": {
+   "10_17": {
+    "n": 10157,
+    "positivos": 5,
+    "taxa_observada": 0.0004922713399625873,
+    "instavel": true,
+    "previsto_escolhido": 0.0008519681204867538,
+    "pr_auc_escolhido": 0.00404802305320511,
+    "previsto_dia_periodo": 0.0006276113409204889,
+    "pr_auc_dia_periodo": 0.0019582079114527145
+   },
+   "18_29": {
+    "n": 12067,
+    "positivos": 12,
+    "taxa_observada": 0.0009944476671915141,
+    "instavel": true,
+    "previsto_escolhido": 0.0007985554431259393,
+    "pr_auc_escolhido": 0.009369585189663335,
+    "previsto_dia_periodo": 0.0006677531331766826,
+    "pr_auc_dia_periodo": 0.0053802547576464015
+   },
+   "30_44": {
+    "n": 15876,
+    "positivos": 9,
+    "taxa_observada": 0.0005668934240362812,
+    "instavel": true,
+    "previsto_escolhido": 0.0007154969286539351,
+    "pr_auc_escolhido": 0.0018432641910737409,
+    "previsto_dia_periodo": 0.0006344521113058413,
+    "pr_auc_dia_periodo": 0.002107594531791673
+   },
+   "45_59": {
+    "n": 14154,
+    "positivos": 1,
+    "taxa_observada": 7.065140596297866e-05,
+    "instavel": true,
+    "previsto_escolhido": 0.0005261614340770891,
+    "pr_auc_escolhido": 0.05555555555555555,
+    "previsto_dia_periodo": 0.0006347409407930634,
+    "pr_auc_dia_periodo": 0.0014005602240896359
+   },
+   "60_mais": {
+    "n": 11538,
+    "positivos": 0,
+    "taxa_observada": 0.0,
+    "instavel": true,
+    "previsto_escolhido": 0.00018583544913320472,
+    "previsto_dia_periodo": 0.000548266173389174
+   }
+  },
+  "dia": {
+   "segunda_a_quinta": {
+    "n": 43208,
+    "positivos": 14,
+    "taxa_observada": 0.0003240140714682466,
+    "instavel": true,
+    "previsto_escolhido": 0.0003958545831929804,
+    "pr_auc_escolhido": 0.0015520497662418935,
+    "previsto_dia_periodo": 0.00040837773098570813,
+    "pr_auc_dia_periodo": 0.0011385038801939708
+   },
+   "sexta_a_domingo": {
+    "n": 20584,
+    "positivos": 13,
+    "taxa_observada": 0.0006315584920326467,
+    "instavel": true,
+    "previsto_escolhido": 0.0010754086421841372,
+    "pr_auc_escolhido": 0.005868920695430228,
+    "previsto_dia_periodo": 0.0010770414181394679,
+    "pr_auc_dia_periodo": 0.0024074355044822952
+   }
+  }
+ },
+ "componentes": {
+  "pizza": {
+   "n": 63792,
+   "positivos": 363,
+   "perda_log": 0.028465647715227037,
+   "brier": 0.0055177984791363755,
+   "pr_auc": 0.0464462792676065,
+   "roc_auc": 0.8788840362797786,
+   "captura_20": 0.7933884297520661,
+   "positivos_capturados_20": 288.0,
+   "precisao_20": 0.02257336343115124,
+   "lift_20": 3.96694214876033,
+   "f1_20": 0.043897754812748636,
+   "matriz_confusao_20": {
+    "vp": 288.0,
+    "fp": 12470.400000000001,
+    "fn": 75.0,
+    "vn": 50958.6
+   },
+   "perda_log_taxa_constante": 0.03509236385626374
+  },
+  "guarana_dado_pizza": {
+   "n": 363,
+   "positivos": 27,
+   "perda_log": 0.27783281971651647,
+   "perda_log_taxa_constante": 0.2739221629269258,
+   "roc_auc": 0.5180776014109347
+  }
+ },
+ "sensibilidade_do_alvo": {
+  "inconclusivos_no_teste": 9,
+  "pr_auc_sem_inconclusivos": {
+   "escolhido": 0.0037186126449038123,
+   "global": 0.0004233102864399605,
+   "dia_periodo": 0.001913949193285882
+  },
+  "pr_auc_inconclusivo_como_positivo": {
+   "escolhido": 0.004883189373600364,
+   "global": 0.000564334085778781,
+   "dia_periodo": 0.0023770901456534044
+  }
+ },
+ "taxa_ponderada_teste": 0.00034621333918456965,
+ "importancia_por_permutacao": {
+  "dia_semana": {
+   "aumento_medio": 5.627829054644087e-05,
+   "desvio": 3.572786005707704e-05,
+   "sustentada": true
+  },
+  "periodo": {
+   "aumento_medio": 0.0007702238268636234,
+   "desvio": 0.00012425197768235998,
+   "sustentada": true
+  },
+  "grande_regiao": {
+   "aumento_medio": -4.077089137970334e-05,
+   "desvio": 1.8881973856103663e-05,
+   "sustentada": false
+  },
+  "area": {
+   "aumento_medio": 2.0223539934592292e-05,
+   "desvio": 1.676860230925157e-05,
+   "sustentada": true
+  },
+  "faixa_etaria": {
+   "aumento_medio": 9.219148552324736e-05,
+   "desvio": 2.1428557385751963e-05,
+   "sustentada": true
+  },
+  "sexo": {
+   "aumento_medio": -2.661878829509235e-06,
+   "desvio": 1.0525925452559692e-06,
+   "sustentada": false
+  },
+  "escolaridade": {
+   "aumento_medio": -1.2233217010100983e-05,
+   "desvio": 2.2526042178241813e-05,
+   "sustentada": false
+  }
+ }
+}

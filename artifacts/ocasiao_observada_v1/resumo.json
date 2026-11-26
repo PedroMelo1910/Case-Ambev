@@ -1,0 +1,733 @@
+{
+ "taxa_global_treino": 0.0006275110629385447,
+ "refeicoes_treino": 245414,
+ "positivos_treino": 154,
+ "guarana_dado_pizza_treino": 0.11492537313432835,
+ "pizza_treino": 0.005460161196997726,
+ "positivos_em_casa": 0.6818181818181818,
+ "suporte_dia_periodo": {
+  "1|almoco": {
+   "episodios": 10992,
+   "positivos": 1
+  },
+  "1|manha": {
+   "episodios": 10425,
+   "positivos": 0
+  },
+  "1|noite": {
+   "episodios": 9791,
+   "positivos": 7
+  },
+  "1|tarde": {
+   "episodios": 7213,
+   "positivos": 0
+  },
+  "2|almoco": {
+   "episodios": 12135,
+   "positivos": 0
+  },
+  "2|manha": {
+   "episodios": 11649,
+   "positivos": 1
+  },
+  "2|noite": {
+   "episodios": 10752,
+   "positivos": 8
+  },
+  "2|tarde": {
+   "episodios": 7819,
+   "positivos": 2
+  },
+  "3|almoco": {
+   "episodios": 11884,
+   "positivos": 0
+  },
+  "3|manha": {
+   "episodios": 11540,
+   "positivos": 0
+  },
+  "3|noite": {
+   "episodios": 10522,
+   "positivos": 22
+  },
+  "3|tarde": {
+   "episodios": 7891,
+   "positivos": 0
+  },
+  "4|almoco": {
+   "episodios": 12372,
+   "positivos": 1
+  },
+  "4|manha": {
+   "episodios": 11974,
+   "positivos": 1
+  },
+  "4|noite": {
+   "episodios": 11131,
+   "positivos": 22
+  },
+  "4|tarde": {
+   "episodios": 8099,
+   "positivos": 0
+  },
+  "5|almoco": {
+   "episodios": 6323,
+   "positivos": 1
+  },
+  "5|manha": {
+   "episodios": 6163,
+   "positivos": 1
+  },
+  "5|noite": {
+   "episodios": 5598,
+   "positivos": 10
+  },
+  "5|tarde": {
+   "episodios": 3883,
+   "positivos": 0
+  },
+  "6|almoco": {
+   "episodios": 3184,
+   "positivos": 0
+  },
+  "6|manha": {
+   "episodios": 2968,
+   "positivos": 0
+  },
+  "6|noite": {
+   "episodios": 2773,
+   "positivos": 10
+  },
+  "6|tarde": {
+   "episodios": 1981,
+   "positivos": 1
+  },
+  "7|almoco": {
+   "episodios": 13997,
+   "positivos": 0
+  },
+  "7|manha": {
+   "episodios": 12270,
+   "positivos": 1
+  },
+  "7|noite": {
+   "episodios": 11633,
+   "positivos": 59
+  },
+  "7|tarde": {
+   "episodios": 8452,
+   "positivos": 6
+  }
+ },
+ "composicao_publico": {
+  "Norte|capital": {
+   "30_44|feminino|medio": 790,
+   "10_17|feminino|ate_fundamental": 708,
+   "45_59|feminino|medio": 342,
+   "30_44|masculino|medio": 612,
+   "10_17|masculino|medio": 118,
+   "18_29|feminino|medio": 836,
+   "45_59|feminino|superior": 272,
+   "30_44|feminino|ate_fundamental": 420,
+   "30_44|feminino|superior": 515,
+   "18_29|feminino|superior": 435,
+   "45_59|feminino|ate_fundamental": 412,
+   "18_29|masculino|ate_fundamental": 248,
+   "10_17|masculino|ate_fundamental": 727,
+   "18_29|masculino|superior": 303,
+   "60_mais|feminino|ate_fundamental": 574,
+   "18_29|masculino|medio": 650,
+   "60_mais|masculino|ate_fundamental": 399,
+   "30_44|masculino|superior": 338,
+   "60_mais|masculino|medio": 56,
+   "45_59|masculino|ate_fundamental": 257,
+   "18_29|feminino|ate_fundamental": 238,
+   "30_44|masculino|ate_fundamental": 326,
+   "60_mais|feminino|medio": 131,
+   "45_59|masculino|medio": 288,
+   "60_mais|feminino|superior": 90,
+   "45_59|masculino|superior": 137,
+   "10_17|feminino|medio": 103,
+   "60_mais|masculino|superior": 42
+  },
+  "Norte|urbano_nao_capital": {
+   "45_59|masculino|ate_fundamental": 677,
+   "45_59|masculino|medio": 355,
+   "45_59|feminino|medio": 357,
+   "30_44|masculino|ate_fundamental": 639,
+   "30_44|feminino|medio": 1022,
+   "10_17|feminino|ate_fundamental": 1149,
+   "10_17|masculino|ate_fundamental": 1213,
+   "18_29|feminino|ate_fundamental": 333,
+   "45_59|feminino|superior": 241,
+   "18_29|feminino|medio": 1102,
+   "30_44|feminino|ate_fundamental": 545,
+   "30_44|feminino|superior": 563,
+   "60_mais|masculino|ate_fundamental": 720,
+   "60_mais|feminino|ate_fundamental": 763,
+   "30_44|masculino|medio": 733,
+   "45_59|feminino|ate_fundamental": 750,
+   "18_29|masculino|ate_fundamental": 395,
+   "18_29|masculino|medio": 905,
+   "10_17|feminino|medio": 225,
+   "30_44|masculino|superior": 198,
+   "18_29|feminino|superior": 403,
+   "45_59|masculino|superior": 135,
+   "18_29|masculino|superior": 149,
+   "10_17|masculino|medio": 164,
+   "60_mais|feminino|medio": 98,
+   "60_mais|masculino|medio": 52,
+   "60_mais|feminino|superior": 48,
+   "60_mais|masculino|superior": 8
+  },
+  "Norte|rural": {
+   "60_mais|masculino|ate_fundamental": 769,
+   "45_59|feminino|ate_fundamental": 777,
+   "18_29|feminino|ate_fundamental": 508,
+   "18_29|masculino|ate_fundamental": 675,
+   "45_59|masculino|ate_fundamental": 817,
+   "18_29|feminino|medio": 656,
+   "30_44|masculino|ate_fundamental": 1023,
+   "10_17|masculino|ate_fundamental": 1275,
+   "60_mais|feminino|ate_fundamental": 559,
+   "45_59|feminino|superior": 64,
+   "18_29|masculino|superior": 49,
+   "30_44|feminino|medio": 422,
+   "30_44|masculino|medio": 345,
+   "30_44|feminino|ate_fundamental": 853,
+   "18_29|masculino|medio": 488,
+   "10_17|feminino|ate_fundamental": 1140,
+   "18_29|feminino|superior": 46,
+   "10_17|feminino|medio": 176,
+   "45_59|feminino|medio": 103,
+   "45_59|masculino|medio": 41,
+   "45_59|masculino|superior": 29,
+   "10_17|masculino|medio": 71,
+   "30_44|masculino|superior": 35,
+   "30_44|feminino|superior": 92,
+   "60_mais|masculino|medio": 35,
+   "60_mais|feminino|medio": 14,
+   "60_mais|feminino|superior": 15
+  },
+  "Nordeste|urbano_nao_capital": {
+   "18_29|masculino|medio": 2547,
+   "30_44|masculino|ate_fundamental": 2919,
+   "30_44|feminino|ate_fundamental": 2814,
+   "60_mais|feminino|ate_fundamental": 4486,
+   "30_44|feminino|medio": 3456,
+   "18_29|feminino|medio": 3320,
+   "60_mais|masculino|medio": 323,
+   "45_59|feminino|superior": 1093,
+   "18_29|masculino|superior": 664,
+   "45_59|feminino|medio": 1494,
+   "60_mais|masculino|ate_fundamental": 3078,
+   "45_59|feminino|ate_fundamental": 3803,
+   "18_29|masculino|ate_fundamental": 1524,
+   "18_29|feminino|ate_fundamental": 1350,
+   "10_17|masculino|ate_fundamental": 3520,
+   "10_17|feminino|ate_fundamental": 3765,
+   "45_59|masculino|ate_fundamental": 3011,
+   "30_44|masculino|medio": 2180,
+   "30_44|feminino|superior": 1616,
+   "10_17|masculino|medio": 527,
+   "10_17|feminino|medio": 829,
+   "45_59|masculino|superior": 329,
+   "30_44|masculino|superior": 788,
+   "45_59|masculino|medio": 921,
+   "18_29|feminino|superior": 1073,
+   "60_mais|masculino|superior": 190,
+   "60_mais|feminino|medio": 594,
+   "60_mais|feminino|superior": 324
+  },
+  "Nordeste|capital": {
+   "30_44|masculino|superior": 638,
+   "30_44|feminino|superior": 989,
+   "10_17|masculino|ate_fundamental": 999,
+   "30_44|feminino|medio": 1429,
+   "18_29|feminino|medio": 1009,
+   "45_59|masculino|medio": 596,
+   "30_44|feminino|ate_fundamental": 765,
+   "30_44|masculino|medio": 946,
+   "18_29|masculino|medio": 787,
+   "60_mais|feminino|ate_fundamental": 1342,
+   "10_17|feminino|ate_fundamental": 1013,
+   "60_mais|feminino|medio": 426,
+   "45_59|feminino|superior": 514,
+   "10_17|masculino|medio": 199,
+   "45_59|feminino|medio": 766,
+   "18_29|feminino|superior": 753,
+   "60_mais|masculino|ate_fundamental": 815,
+   "18_29|masculino|ate_fundamental": 376,
+   "30_44|masculino|ate_fundamental": 611,
+   "45_59|masculino|ate_fundamental": 657,
+   "60_mais|masculino|medio": 326,
+   "60_mais|masculino|superior": 159,
+   "45_59|feminino|ate_fundamental": 1109,
+   "60_mais|feminino|superior": 288,
+   "18_29|masculino|superior": 535,
+   "10_17|feminino|medio": 238,
+   "18_29|feminino|ate_fundamental": 292,
+   "45_59|masculino|superior": 237
+  },
+  "Nordeste|rural": {
+   "60_mais|masculino|ate_fundamental": 1572,
+   "60_mais|feminino|ate_fundamental": 1445,
+   "45_59|feminino|ate_fundamental": 1228,
+   "18_29|masculino|ate_fundamental": 825,
+   "30_44|masculino|ate_fundamental": 1511,
+   "30_44|feminino|ate_fundamental": 1358,
+   "10_17|masculino|ate_fundamental": 1572,
+   "10_17|feminino|ate_fundamental": 1350,
+   "30_44|feminino|medio": 527,
+   "18_29|feminino|ate_fundamental": 664,
+   "30_44|masculino|medio": 514,
+   "18_29|feminino|medio": 1038,
+   "18_29|masculino|medio": 635,
+   "10_17|feminino|medio": 162,
+   "45_59|masculino|ate_fundamental": 1375,
+   "10_17|masculino|medio": 102,
+   "18_29|feminino|superior": 92,
+   "45_59|masculino|superior": 17,
+   "45_59|feminino|superior": 57,
+   "30_44|masculino|superior": 49,
+   "30_44|feminino|superior": 155,
+   "45_59|feminino|medio": 132,
+   "60_mais|masculino|medio": 51,
+   "45_59|masculino|medio": 59,
+   "60_mais|feminino|medio": 56,
+   "60_mais|feminino|superior": 35,
+   "18_29|masculino|superior": 12
+  },
+  "Sudeste|urbano_nao_capital": {
+   "60_mais|masculino|ate_fundamental": 2873,
+   "45_59|feminino|ate_fundamental": 2624,
+   "18_29|masculino|superior": 550,
+   "60_mais|feminino|superior": 489,
+   "45_59|feminino|medio": 1764,
+   "60_mais|feminino|ate_fundamental": 3855,
+   "10_17|feminino|ate_fundamental": 2033,
+   "18_29|masculino|ate_fundamental": 634,
+   "45_59|masculino|superior": 660,
+   "18_29|feminino|medio": 2029,
+   "10_17|masculino|ate_fundamental": 2320,
+   "30_44|masculino|ate_fundamental": 1359,
+   "45_59|feminino|superior": 930,
+   "45_59|masculino|ate_fundamental": 2223,
+   "30_44|masculino|superior": 826,
+   "30_44|feminino|ate_fundamental": 1439,
+   "18_29|feminino|superior": 1080,
+   "18_29|masculino|medio": 1873,
+   "30_44|feminino|superior": 1628,
+   "10_17|feminino|medio": 451,
+   "45_59|masculino|medio": 1151,
+   "60_mais|feminino|medio": 620,
+   "10_17|masculino|medio": 516,
+   "30_44|feminino|medio": 2516,
+   "18_29|feminino|ate_fundamental": 469,
+   "30_44|masculino|medio": 2061,
+   "60_mais|masculino|medio": 555,
+   "60_mais|masculino|superior": 328
+  },
+  "Sudeste|capital": {
+   "30_44|feminino|medio": 611,
+   "45_59|feminino|ate_fundamental": 439,
+   "18_29|feminino|medio": 464,
+   "45_59|masculino|superior": 268,
+   "45_59|masculino|ate_fundamental": 268,
+   "10_17|feminino|ate_fundamental": 321,
+   "60_mais|feminino|ate_fundamental": 631,
+   "30_44|feminino|superior": 504,
+   "10_17|masculino|medio": 110,
+   "10_17|masculino|ate_fundamental": 425,
+   "60_mais|feminino|medio": 303,
+   "30_44|masculino|superior": 306,
+   "18_29|feminino|superior": 340,
+   "60_mais|feminino|superior": 274,
+   "60_mais|masculino|medio": 195,
+   "10_17|feminino|medio": 117,
+   "60_mais|masculino|ate_fundamental": 425,
+   "30_44|masculino|ate_fundamental": 259,
+   "30_44|feminino|ate_fundamental": 205,
+   "45_59|feminino|medio": 391,
+   "30_44|masculino|medio": 396,
+   "18_29|masculino|medio": 425,
+   "45_59|feminino|superior": 470,
+   "45_59|masculino|medio": 364,
+   "18_29|masculino|superior": 205,
+   "60_mais|masculino|superior": 233,
+   "18_29|masculino|ate_fundamental": 57,
+   "18_29|feminino|ate_fundamental": 84
+  },
+  "Sudeste|rural": {
+   "30_44|feminino|ate_fundamental": 944,
+   "30_44|masculino|ate_fundamental": 894,
+   "18_29|masculino|medio": 544,
+   "10_17|masculino|medio": 145,
+   "18_29|feminino|medio": 522,
+   "45_59|masculino|ate_fundamental": 1064,
+   "10_17|feminino|ate_fundamental": 667,
+   "45_59|feminino|ate_fundamental": 987,
+   "60_mais|feminino|ate_fundamental": 1037,
+   "18_29|masculino|ate_fundamental": 344,
+   "30_44|masculino|medio": 298,
+   "30_44|feminino|medio": 418,
+   "10_17|masculino|ate_fundamental": 597,
+   "45_59|masculino|superior": 59,
+   "30_44|masculino|superior": 67,
+   "60_mais|masculino|ate_fundamental": 1128,
+   "10_17|feminino|medio": 157,
+   "45_59|feminino|medio": 209,
+   "30_44|feminino|superior": 142,
+   "45_59|feminino|superior": 122,
+   "45_59|masculino|medio": 201,
+   "60_mais|feminino|medio": 39,
+   "18_29|feminino|ate_fundamental": 202,
+   "18_29|masculino|superior": 62,
+   "18_29|feminino|superior": 87,
+   "60_mais|masculino|medio": 31,
+   "60_mais|masculino|superior": 33,
+   "60_mais|feminino|superior": 22
+  },
+  "Sul|rural": {
+   "45_59|feminino|medio": 201,
+   "45_59|masculino|ate_fundamental": 1168,
+   "18_29|masculino|medio": 327,
+   "18_29|masculino|ate_fundamental": 148,
+   "30_44|masculino|ate_fundamental": 441,
+   "30_44|feminino|ate_fundamental": 690,
+   "10_17|feminino|ate_fundamental": 386,
+   "60_mais|feminino|ate_fundamental": 1218,
+   "30_44|masculino|medio": 252,
+   "10_17|masculino|ate_fundamental": 539,
+   "60_mais|masculino|ate_fundamental": 1179,
+   "45_59|feminino|ate_fundamental": 1079,
+   "18_29|feminino|medio": 373,
+   "18_29|feminino|ate_fundamental": 136,
+   "45_59|feminino|superior": 46,
+   "45_59|masculino|medio": 152,
+   "10_17|masculino|medio": 95,
+   "10_17|feminino|medio": 94,
+   "18_29|feminino|superior": 90,
+   "30_44|feminino|medio": 163,
+   "30_44|feminino|superior": 97,
+   "30_44|masculino|superior": 25,
+   "45_59|masculino|superior": 26,
+   "60_mais|feminino|medio": 58,
+   "18_29|masculino|superior": 56,
+   "60_mais|feminino|superior": 17,
+   "60_mais|masculino|medio": 20,
+   "60_mais|masculino|superior": 10
+  },
+  "Sul|urbano_nao_capital": {
+   "30_44|masculino|medio": 919,
+   "30_44|feminino|medio": 1187,
+   "60_mais|masculino|ate_fundamental": 1438,
+   "18_29|feminino|superior": 711,
+   "60_mais|feminino|ate_fundamental": 2094,
+   "30_44|feminino|ate_fundamental": 852,
+   "18_29|masculino|medio": 962,
+   "10_17|masculino|medio": 179,
+   "45_59|masculino|ate_fundamental": 1180,
+   "45_59|feminino|medio": 828,
+   "45_59|feminino|ate_fundamental": 1746,
+   "30_44|masculino|ate_fundamental": 732,
+   "10_17|masculino|ate_fundamental": 1145,
+   "18_29|feminino|medio": 1054,
+   "18_29|masculino|superior": 391,
+   "45_59|masculino|superior": 369,
+   "45_59|feminino|superior": 528,
+   "10_17|feminino|medio": 182,
+   "18_29|feminino|ate_fundamental": 355,
+   "10_17|feminino|ate_fundamental": 979,
+   "45_59|masculino|medio": 640,
+   "60_mais|masculino|superior": 201,
+   "18_29|masculino|ate_fundamental": 497,
+   "60_mais|feminino|medio": 322,
+   "60_mais|masculino|medio": 225,
+   "60_mais|feminino|superior": 210,
+   "30_44|feminino|superior": 899,
+   "30_44|masculino|superior": 444
+  },
+  "Sul|capital": {
+   "18_29|feminino|ate_fundamental": 54,
+   "30_44|masculino|ate_fundamental": 36,
+   "45_59|feminino|ate_fundamental": 98,
+   "10_17|masculino|ate_fundamental": 102,
+   "30_44|feminino|medio": 111,
+   "45_59|feminino|superior": 177,
+   "60_mais|feminino|medio": 82,
+   "60_mais|masculino|superior": 117,
+   "60_mais|feminino|superior": 85,
+   "60_mais|masculino|medio": 35,
+   "18_29|feminino|superior": 72,
+   "30_44|masculino|medio": 78,
+   "30_44|feminino|ate_fundamental": 42,
+   "45_59|feminino|medio": 195,
+   "60_mais|masculino|ate_fundamental": 135,
+   "45_59|masculino|ate_fundamental": 67,
+   "18_29|masculino|medio": 110,
+   "30_44|masculino|superior": 69,
+   "18_29|masculino|superior": 83,
+   "60_mais|feminino|ate_fundamental": 234,
+   "18_29|feminino|medio": 67,
+   "30_44|feminino|superior": 109,
+   "45_59|masculino|medio": 124,
+   "10_17|feminino|ate_fundamental": 94,
+   "45_59|masculino|superior": 108,
+   "10_17|masculino|medio": 23,
+   "18_29|masculino|ate_fundamental": 22,
+   "10_17|feminino|medio": 15
+  },
+  "Centro-Oeste|urbano_nao_capital": {
+   "60_mais|masculino|ate_fundamental": 527,
+   "60_mais|masculino|medio": 77,
+   "60_mais|feminino|ate_fundamental": 768,
+   "45_59|feminino|medio": 429,
+   "30_44|masculino|ate_fundamental": 404,
+   "45_59|masculino|ate_fundamental": 682,
+   "45_59|feminino|ate_fundamental": 831,
+   "18_29|masculino|medio": 482,
+   "18_29|feminino|ate_fundamental": 225,
+   "30_44|feminino|medio": 450,
+   "30_44|feminino|ate_fundamental": 402,
+   "18_29|masculino|ate_fundamental": 226,
+   "60_mais|feminino|superior": 71,
+   "30_44|feminino|superior": 453,
+   "10_17|feminino|ate_fundamental": 605,
+   "10_17|masculino|ate_fundamental": 816,
+   "30_44|masculino|medio": 403,
+   "45_59|feminino|superior": 246,
+   "18_29|feminino|superior": 302,
+   "18_29|feminino|medio": 596,
+   "45_59|masculino|medio": 233,
+   "18_29|masculino|superior": 219,
+   "10_17|feminino|medio": 194,
+   "60_mais|masculino|superior": 38,
+   "45_59|masculino|superior": 90,
+   "10_17|masculino|medio": 126,
+   "30_44|masculino|superior": 181,
+   "60_mais|feminino|medio": 109
+  },
+  "Centro-Oeste|capital": {
+   "30_44|feminino|ate_fundamental": 351,
+   "18_29|feminino|superior": 446,
+   "60_mais|masculino|medio": 185,
+   "60_mais|feminino|ate_fundamental": 561,
+   "30_44|masculino|medio": 312,
+   "18_29|feminino|medio": 435,
+   "10_17|feminino|ate_fundamental": 466,
+   "45_59|feminino|medio": 408,
+   "10_17|masculino|ate_fundamental": 603,
+   "45_59|masculino|medio": 226,
+   "45_59|masculino|superior": 341,
+   "45_59|feminino|superior": 385,
+   "30_44|feminino|medio": 454,
+   "10_17|masculino|medio": 147,
+   "18_29|masculino|ate_fundamental": 101,
+   "60_mais|masculino|ate_fundamental": 356,
+   "45_59|feminino|ate_fundamental": 453,
+   "30_44|masculino|superior": 371,
+   "60_mais|masculino|superior": 122,
+   "18_29|masculino|medio": 340,
+   "30_44|masculino|ate_fundamental": 315,
+   "60_mais|feminino|superior": 158,
+   "60_mais|feminino|medio": 127,
+   "30_44|feminino|superior": 634,
+   "45_59|masculino|ate_fundamental": 334,
+   "18_29|masculino|superior": 301,
+   "10_17|feminino|medio": 136,
+   "18_29|feminino|ate_fundamental": 56
+  },
+  "Centro-Oeste|rural": {
+   "60_mais|feminino|ate_fundamental": 685,
+   "30_44|feminino|superior": 158,
+   "45_59|masculino|ate_fundamental": 1090,
+   "10_17|feminino|ate_fundamental": 614,
+   "30_44|masculino|ate_fundamental": 757,
+   "30_44|feminino|ate_fundamental": 651,
+   "18_29|feminino|medio": 304,
+   "45_59|feminino|ate_fundamental": 801,
+   "10_17|feminino|medio": 105,
+   "60_mais|masculino|ate_fundamental": 1037,
+   "18_29|masculino|ate_fundamental": 275,
+   "10_17|masculino|ate_fundamental": 831,
+   "18_29|feminino|ate_fundamental": 234,
+   "18_29|masculino|medio": 392,
+   "30_44|feminino|medio": 468,
+   "60_mais|feminino|medio": 78,
+   "45_59|feminino|medio": 224,
+   "60_mais|masculino|superior": 28,
+   "45_59|masculino|medio": 222,
+   "60_mais|masculino|medio": 42,
+   "30_44|masculino|medio": 221,
+   "10_17|masculino|medio": 146,
+   "18_29|feminino|superior": 165,
+   "45_59|masculino|superior": 36,
+   "30_44|masculino|superior": 77,
+   "45_59|feminino|superior": 131,
+   "60_mais|feminino|superior": 32,
+   "18_29|masculino|superior": 103
+  }
+ },
+ "horas_por_periodo": {
+  "manha": {
+   "5": 869,
+   "6": 7180,
+   "7": 20454,
+   "8": 16671,
+   "9": 12273,
+   "10": 9542
+  },
+  "almoco": {
+   "11": 10915,
+   "12": 41467,
+   "13": 12882,
+   "14": 5623
+  },
+  "tarde": {
+   "15": 14757,
+   "16": 12995,
+   "17": 7149,
+   "18": 10437
+  },
+  "noite": {
+   "0": 140,
+   "1": 79,
+   "2": 70,
+   "3": 76,
+   "4": 157,
+   "19": 23780,
+   "20": 20855,
+   "21": 10718,
+   "22": 4646,
+   "23": 1679
+  }
+ },
+ "distribuicoes": {
+  "dia_semana": {
+   "1": 38421,
+   "2": 42355,
+   "3": 41837,
+   "4": 43576,
+   "5": 21967,
+   "6": 10906,
+   "7": 46352
+  },
+  "periodo": {
+   "almoco": 70887,
+   "manha": 66989,
+   "noite": 62200,
+   "tarde": 45338
+  },
+  "grande_regiao": {
+   "Centro-Oeste": 29216,
+   "Nordeste": 87945,
+   "Norte": 35386,
+   "Sudeste": 59968,
+   "Sul": 32899
+  },
+  "area": {
+   "capital": 49939,
+   "rural": 57685,
+   "urbano_nao_capital": 137790
+  },
+  "faixa_etaria": {
+   "10_17": 37826,
+   "18_29": 46596,
+   "30_44": 61817,
+   "45_59": 53540,
+   "60_mais": 45635
+  },
+  "sexo": {
+   "feminino": 134206,
+   "masculino": 111208
+  },
+  "escolaridade": {
+   "ate_fundamental": 136788,
+   "medio": 74099,
+   "superior": 34527
+  }
+ },
+ "referencia_regra": {
+  "m": 1000
+ },
+ "versao": "ocasiao_observada_v1",
+ "spec": {
+  "familia": "dois_passos",
+  "bloco": "B123",
+  "C": 0.1
+ },
+ "teste_sha256": "1131419baccd09bb3263dec3d4f26dd5c7942f29de348c4f8f1fba66de1b0458",
+ "importancia": {
+  "dia_semana": {
+   "aumento_medio": 5.627829054644087e-05,
+   "desvio": 3.572786005707704e-05,
+   "sustentada": true
+  },
+  "periodo": {
+   "aumento_medio": 0.0007702238268636234,
+   "desvio": 0.00012425197768235998,
+   "sustentada": true
+  },
+  "grande_regiao": {
+   "aumento_medio": -4.077089137970334e-05,
+   "desvio": 1.8881973856103663e-05,
+   "sustentada": false
+  },
+  "area": {
+   "aumento_medio": 2.0223539934592292e-05,
+   "desvio": 1.676860230925157e-05,
+   "sustentada": true
+  },
+  "faixa_etaria": {
+   "aumento_medio": 9.219148552324736e-05,
+   "desvio": 2.1428557385751963e-05,
+   "sustentada": true
+  },
+  "sexo": {
+   "aumento_medio": -2.661878829509235e-06,
+   "desvio": 1.0525925452559692e-06,
+   "sustentada": false
+  },
+  "escolaridade": {
+   "aumento_medio": -1.2233217010100983e-05,
+   "desvio": 2.2526042178241813e-05,
+   "sustentada": false
+  }
+ },
+ "avaliacao": {
+  "escolhido": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0033309108912236178,
+   "pr_auc": 0.003714953645955656,
+   "roc_auc": 0.8631581240143931,
+   "captura_20": 0.7407407407407407,
+   "lift_20": 3.7037037037037033,
+   "precisao_20": 0.001567594682718836,
+   "observado_sobre_esperado": 0.6880681985403354
+  },
+  "global": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0037483858868861885,
+   "pr_auc": 0.00042325056433408577,
+   "roc_auc": 0.5,
+   "captura_20": 0.2,
+   "lift_20": 1.0,
+   "precisao_20": 0.00042325056433408577,
+   "observado_sobre_esperado": 0.6744909999706838
+  },
+  "dia_periodo": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.003356862518440292,
+   "pr_auc": 0.0019130578825416029,
+   "roc_auc": 0.8614379768304335,
+   "captura_20": 0.7744660812014765,
+   "lift_20": 3.872330406007382,
+   "precisao_20": 0.001638966029630664,
+   "observado_sobre_esperado": 0.678136286208344
+  }
+ }
+}

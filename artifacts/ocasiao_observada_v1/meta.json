@@ -1,0 +1,8 @@
+{
+ "versao": "ocasiao_observada_v1",
+ "sha256": {
+  "modelo.joblib": "657c092639bc94ccd1e45fc7be72479344dea0202f7fa20df0e472ca9091fbee",
+  "resumo.json": "07bdf5849bfdeafc8c3aae015856acd866b4c2a63275ab714e852c5d310f0a9f"
+ },
+ "scikit-learn": "1.9.1"
+}

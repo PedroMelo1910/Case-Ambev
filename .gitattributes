@@ -1,8 +1,5 @@
-# O SHA-256 deste arquivo esta em configs/crosswalk.json: o fim de linha precisa ser o mesmo em todo clone.
-configs/contexto_uf.csv text eol=lf
-# Manifesto e artefatos congelados: os bytes (e os SHA-256 do manifesto) precisam ser iguais em todo clone, sem conversao de fim de linha.
-artifacts/modelagem_2008/** -text
-artifacts/contexto_reduzido_v1/** -text
-# Transformacao conferida pela integridade da inferencia (SHA-256 no manifesto): mesmo fim de linha em todo clone.
+# Artefato publicado: o servidor confere os SHA-256 de meta.json (e o de teste.json registrado no resumo) antes de
+# carregar o modelo. Os bytes precisam ser iguais em todo clone, sem conversao de fim de linha.
+artifacts/ocasiao_observada_v1/** -text
+# Faixas e categorias lidas no preparo e na inferencia: mesmo fim de linha em todo clone.
 configs/variaveis.json text eol=lf
-src/occasion/variaveis.py text eol=lf

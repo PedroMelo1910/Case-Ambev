@@ -1,0 +1,264 @@
+{
+ "treino": "POF 2008-2009 inteira (regra de comida v1, sem agua registrada)",
+ "avaliacao": "particao de teste de 2017 (mesmas refeicoes do teste do modelo de 2017)",
+ "taxa_2008": 0.00039773957902612873,
+ "taxa_teste_2017": 0.00042325056433408577,
+ "metricas": {
+  "escolhido_2008": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0032898896458781733,
+   "brier": 0.00042269967203961673,
+   "pr_auc": 0.0031743811994708005,
+   "roc_auc": 0.8735940127377435,
+   "captura_20": 0.8148148148148148,
+   "positivos_capturados_20": 22.0,
+   "precisao_20": 0.0017243541509907197,
+   "lift_20": 4.0740740740740735,
+   "f1_20": 0.0034414253758192933,
+   "matriz_confusao_20": {
+    "vp": 22.0,
+    "fp": 12736.400000000001,
+    "fn": 5.0,
+    "vn": 51028.6
+   },
+   "calibracao": {
+    "ece": 0.00018448294030392825,
+    "por_decil": [
+     {
+      "previsto": 1.8348101471801134e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 3.0500363415238288e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 4.3435227803740213e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 6.0318461990116e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 8.744579441513495e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.0001312044217212748,
+      "observado": 0.00015676438313215238,
+      "n": 6379,
+      "positivos": 1
+     },
+     {
+      "previsto": 0.00020882663573381553,
+      "observado": 0.0004702931493964571,
+      "n": 6379,
+      "positivos": 3
+     },
+     {
+      "previsto": 0.0003778648109276514,
+      "observado": 0.00015676438313215238,
+      "n": 6379,
+      "positivos": 1
+     },
+     {
+      "previsto": 0.0007714008775794708,
+      "observado": 0.001254115065057219,
+      "n": 6379,
+      "positivos": 8
+     },
+     {
+      "previsto": 0.002808691910455824,
+      "observado": 0.002194701363850133,
+      "n": 6379,
+      "positivos": 14
+     }
+    ],
+    "observado_sobre_esperado": 0.9327009828614695
+   }
+  },
+  "dia_periodo_2008": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.003318348468224161,
+   "brier": 0.0004227145689519936,
+   "pr_auc": 0.0018826152830137017,
+   "roc_auc": 0.8623556984413253,
+   "captura_20": 0.6783300252494565,
+   "positivos_capturados_20": 18.314910681735327,
+   "precisao_20": 0.0014355178299579356,
+   "lift_20": 3.3916501262472827,
+   "f1_20": 0.00286497265345399,
+   "matriz_confusao_20": {
+    "vp": 18.314910681735327,
+    "fp": 12740.085089318267,
+    "fn": 8.685089318264673,
+    "vn": 51024.914910681735
+   },
+   "calibracao": {
+    "ece": 0.0001955479226544058,
+    "por_decil": [
+     {
+      "previsto": 2.0016930165384552e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 2.7857298514525572e-05,
+      "observado": 0.0,
+      "n": 6380,
+      "positivos": 0
+     },
+     {
+      "previsto": 3.855896892569474e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 5.787978641714743e-05,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 9.584818480288836e-05,
+      "observado": 0.00015676438313215238,
+      "n": 6379,
+      "positivos": 1
+     },
+     {
+      "previsto": 0.00020660236888051455,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00032414073214401235,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.0005112329337223358,
+      "observado": 0.0014108794481893713,
+      "n": 6379,
+      "positivos": 9
+     },
+     {
+      "previsto": 0.0007656136200110037,
+      "observado": 0.0004702931493964571,
+      "n": 6379,
+      "positivos": 3
+     },
+     {
+      "previsto": 0.0021701076008391923,
+      "observado": 0.002194701363850133,
+      "n": 6379,
+      "positivos": 14
+     }
+    ],
+    "observado_sobre_esperado": 1.0035023434643882
+   }
+  },
+  "global_2008": {
+   "n": 63792,
+   "positivos": 27,
+   "perda_log": 0.0037115808057004837,
+   "brier": 0.0004230720741042479,
+   "pr_auc": 0.00042325056433408577,
+   "roc_auc": 0.5,
+   "captura_20": 0.2,
+   "positivos_capturados_20": 5.4,
+   "precisao_20": 0.00042325056433408577,
+   "lift_20": 1.0,
+   "f1_20": 0.0008447135013374631,
+   "matriz_confusao_20": {
+    "vp": 5.4,
+    "fp": 12753.000000000002,
+    "fn": 21.6,
+    "vn": 51012.0
+   },
+   "calibracao": {
+    "ece": 0.00021828509800016617,
+    "por_decil": [
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0006269592476489029,
+      "n": 6380,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0006269592476489029,
+      "n": 6380,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.00031352876626430476,
+      "n": 6379,
+      "positivos": 2
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0,
+      "n": 6379,
+      "positivos": 0
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0004702931493964571,
+      "n": 6379,
+      "positivos": 3
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.00031352876626430476,
+      "n": 6379,
+      "positivos": 2
+     },
+     {
+      "previsto": 0.00039773957902612857,
+      "observado": 0.0006270575325286095,
+      "n": 6379,
+      "positivos": 4
+     }
+    ],
+    "observado_sobre_esperado": 1.0641399213284763
+   }
+  }
+ },
+ "leitura": "Vale para a ORDEM dos contextos (AUC, PR-AUC e captura): o que 2008 aprendeu se mantem em 2017? O nivel (O/E) mistura consumo e registro: em 2008, 11,8% das pizzas com refrigerante tem sabor nao especificado (2,6% em 2017), o que subnotifica o guarana de 2008."
+}

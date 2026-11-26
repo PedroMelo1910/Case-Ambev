@@ -17,3 +17,7 @@ dev = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["real: exige os microdados reais (CASE_AMBEV_RAW_ROOT)"]
