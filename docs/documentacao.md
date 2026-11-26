@@ -1,12 +1,105 @@
 # Documentação técnica — Occasion Intelligence: Pizza + Guaraná
 
-- [Data Card](#data-card)
-- [Análise exploratória de 2008](#eda-2008)
-- [Protocolo de modelagem](#protocolo-modelagem)
+- [Occasion Score vigente (protocolo v3)](#produto-vigente)
+- Registro histórico da primeira formulação (protocolo v1.0):
+  - [Data Card](#data-card)
+  - [Análise exploratória de 2008](#eda-2008)
+  - [Protocolo de modelagem](#protocolo-modelagem)
+
+<a id="produto-vigente"></a>
+
+## Occasion Score vigente (protocolo v3)
+
+Esta seção descreve o que a aplicação entregue faz hoje. O protocolo está em [`protocolo_v3_alvo_observado.json`](../configs/protocolo_v3_alvo_observado.json), de 24/11/2026, e os resultados estão em `artifacts/ocasiao_observada_v1/`. As seções seguintes (Data Card, EDA de 2008 e protocolo v1.0) registram a primeira formulação do projeto e continuam válidas como histórico, mas não descrevem o modelo publicado.
+
+### 1. O que se prevê
+
+O modelo estima a chance de uma refeição com comida incluir pizza e guaraná juntos, em um contexto escolhido pela equipe: dia da semana, período ou hora, grande região, tipo de área e, se a equipe quiser, faixa etária, sexo e escolaridade do público. A estimativa é feita em dois passos, multiplicando duas regressões logísticas regularizadas:
+
+chance de pizza e guaraná = chance de a refeição ter pizza × chance de ter guaraná entre as refeições com pizza
+
+- Unidade: refeição com comida, isto é, pessoa × dia de registro × hora inteira, com pelo menos um item de comida. Episódios só com água, só com bebidas ou só com adições ficam fora.
+- Positivo: pizza e um dos seis códigos de guaraná da POF (`8200301`, `8200302`, `8201601`, `8201602`, `8207401`, `8207402`) na mesma refeição. Refrigerante registrado sem sabor (`8203501`) conta como guaraná não identificado, ou seja, zero.
+- Instante de previsão: o planejamento da ação, antes da refeição. Só entram campos que a equipe conhece nesse momento.
+
+A POF registra consumo: o que a pessoa disse ter comido e bebido, quando e onde. A base não mede pedidos de delivery, vendas, canal, preço, a marca Guaraná Antarctica nem o efeito de uma campanha. Por isso o número da tela é uma chance de consumo observado, usada para comparar contextos. Quando a tela recomenda testar um combo, essa recomendação é uma decisão de marketing apoiada pela estimativa. O efeito do combo só aparece em um teste com grupo de controle, que a própria tela sugere como próximo passo.
+
+### 2. De onde vem a evidência
+
+| Papel | Base | Refeições | Positivos | Uso |
+|---|---|---|---|---|
+| Desenvolvimento | POF 2017–2018, partição `desenvolvimento` (cerca de 80% dos domicílios, por SHA-256 do domicílio) | 245.414 | 154 | comparação dos candidatos em 5 dobras agrupadas por UPA e ajuste do modelo publicado |
+| Teste reservado | POF 2017–2018, partição `teste` (resto 0 por 5) | 63.792 | 27 | aberto uma vez para o alvo conjunto, depois da escolha |
+| Avaliação temporal | treino na POF 2008–2009 inteira; avaliação no mesmo teste de 2017 | 253.935 no treino | 101 no treino | verifica se a ordem dos contextos aprendida em 2008 se mantém em 2017 |
+
+No treino, 0,546% das refeições têm pizza, 11,5% das refeições com pizza têm guaraná e a taxa conjunta é 0,063%. Com o peso de expansão do IBGE (`PESO_FINAL`), a taxa conjunta do desenvolvimento sobe para 0,086%, cerca de um terço acima. No teste ela é 0,042% sem peso e 0,035% com peso. Os números da tela são da amostra, sem peso, e servem para comparar contextos, não para dimensionar mercado.
+
+Escolha do modelo no desenvolvimento. Os candidatos foram taxa global, frequência por dia e período (a regra de referência), logística, dois passos e gradient boosting. A regra fixada antes da comparação manda escolher a menor perda logarítmica média, exceto quando a vantagem sobre um candidato mais simples fica abaixo de 1 erro-padrão. O vencedor foi o modelo de dois passos com calendário, território e público (C = 0,1). Contra a regra dia × período, a perda caiu 2,3e-4, com erro-padrão de 2,9e-5. Os hiperparâmetros foram escolhidos nas mesmas dobras, então essas perdas são levemente otimistas.
+
+Teste reservado, aberto uma vez (27 positivos; intervalos de 95% por bootstrap de 1.000 reamostras de UPAs):
+
+| Métrica | Modelo de dois passos | Regra dia × período | Taxa global | Diferença do modelo contra a regra |
+|---|---|---|---|---|
+| Perda logarítmica | 0,003331 | 0,003357 | 0,003748 | de −0,00021 a +0,00020: empate |
+| PR-AUC | 0,0037 | 0,0019 | 0,0004 | de +0,0002 a +0,0078: ganho |
+| ROC-AUC | 0,863 | 0,861 | 0,500 | sem intervalo |
+| Captura nos 20% de maior score | 74% (20 de 27) | 77% (20,9 de 27) | 20% | de −23 a +15 pontos: empate |
+| Observado / esperado | 0,69 | 0,68 | 0,67 | sem intervalo |
+
+O ganho do modelo está na PR-AUC, ou seja, em concentrar os positivos no topo da lista. Na perda logarítmica, a métrica principal do protocolo, e na captura dos 20% priorizados, houve empate com a regra dia × período. A ROC-AUC ficou praticamente igual.
+
+Avaliação temporal, com treino em 2008 e avaliação no teste de 2017, sem intervalo: o modelo de dois passos teve PR-AUC 0,0032 contra 0,0019 da regra, perda 0,003290 contra 0,003318 e captura de 81% (22 de 27) contra 68%. A ordem dos contextos aprendida em 2008 se manteve em 2017. O nível não deve ser comparado entre edições: em 2008, 11,8% das pizzas com refrigerante têm sabor não especificado, contra 2,6% em 2017, e os instrumentos de coleta são diferentes.
+
+Falhas e limitações que continuam valendo:
+
+- Superestimação do nível: no teste, o observado foi cerca de 0,69 do esperado para todos os candidatos, porque a taxa do teste (0,042%) ficou abaixo da do desenvolvimento (0,063%). O score deve ser lido como comparação com a média, não como frequência exata.
+- O segundo passo não discrimina no teste: a chance de guaraná entre refeições com pizza teve ROC-AUC 0,52 e perda 0,2778, pior que a de uma taxa constante (0,2739), em 363 refeições com pizza e 27 positivos. A ordenação vem quase toda da chance de pizza (ROC-AUC 0,88). Nos detalhes do resultado, a tela avisa que a variação do guaraná entre contextos não foi confirmada no teste.
+- Poucos positivos: 27 no teste, 26 deles à noite e nenhum no almoço ou na tarde. Todos os segmentos do teste ficam abaixo de 30 positivos e são marcados como instáveis.
+- Exposições anteriores declaradas no protocolo: a partição de teste já tinha sido usada para os componentes (pizza, refrigerante e sabor) em 24/11/2026, sem o alvo conjunto. A POF 2017 inteira e a 2008 inteira já tinham sido usadas na primeira formulação. Por isso o teste não é totalmente cego.
+- Campos que ajudam o modelo em geral, por permutação fora da dobra no desenvolvimento (`explicacao.json`, sem usar o teste): dia da semana, período, tipo de área, faixa etária e escolaridade. Região e sexo não passaram nesse critério. A tela só lista em "O que mais pesou" campos que passaram e que mudaram a estimativa do cenário. A mesma medida feita antes no teste reservado (em `teste.json` e `resumo.json`) não confirmava a escolaridade; ela fica como registro e não decide o que a tela mostra.
+- Sem pesos no treino e nas métricas principais. Grande parte dos positivos é consumo em casa (68% no treino), e a base não diz se a comida veio de delivery.
+
+### 3. O que foi investigado e ficou fora do modelo final
+
+As quatro fontes abaixo foram testadas em 25/11/2026 contra o modelo sem elas, nas mesmas linhas e dobras, pela perda logarítmica média em 5 dobras. Nenhuma melhorou a previsão, e o código, as configurações e os resultados saíram da entrega. A aplicação não depende de nenhuma delas.
+
+| Fonte | Como foi testada | Resultado | Decisão |
+|---|---|---|---|
+| Clima (ERA5 das 27 capitais) | desvio de temperatura e chuva do período anterior, por UF, somado a calendário, território e sazonalidade; 2008 por semana e 2017 por mês | piorou a perda em 2,0e-5 em 2008 (melhor em 1 de 5 dobras) e em 2,7e-5 em 2017; o clima da própria refeição, que nem existe no instante de previsão, também piorou | fora: não acrescenta sinal |
+| Feriados nacionais | feriado na janela da semana de coleta, junto com o clima anterior, em 2008; em 2017 só se conhece o mês, o que não permite marcar feriado | entrou na mesma variante que piorou a perda | fora: sem ganho e sem chave em 2017 |
+| Indicadores por estado (SIDRA: urbanização, faixas etárias e acesso a internet) | quatro indicadores por UF somados a calendário e território | piorou a perda do alvo conjunto em 2,9e-5 (melhor em 0 de 5 dobras) e a de pizza em 6,9e-5 | fora: a UF já está representada pela região e pelo tipo de área |
+| Delivery Center | volume de pedidos de comida por cidade, data e período (jan–abr/2021, 4 capitais), com clima previsto e feriado | o desvio de Poisson caiu pouco (15,82 para 15,66) e os coeficientes foram pequenos; a base não identifica pizza nem guaraná | fora: mede volume de pedidos, sem ligação com o alvo |
+
+### 4. Como executar
+
+Requisitos: [uv](https://docs.astral.sh/uv/), que instala o Python 3.12 e as versões fixadas em `uv.lock`. O artefato do modelo já está no repositório, então a aplicação não precisa dos microdados. Os comandos são os mesmos no PowerShell, no Prompt de Comando do Windows e no terminal do Linux ou macOS, a partir da raiz do projeto:
+
+```bash
+uv sync
+cd src
+uv run python -m aplicacao.servidor
+```
+
+Depois, abra `http://127.0.0.1:8000` no navegador. O servidor confere os SHA-256 do artefato antes de subir e recusa arquivos alterados. `Ctrl+C` encerra. Para usar outra porta: `uv run python -m aplicacao.servidor --porta 8001`.
+
+Testes, também a partir da raiz: `uv run pytest`. Os testes usam dados sintéticos e o artefato publicado. A conferência do manifesto da auditoria só roda com `CASE_AMBEV_AUDITORIA_MANIFESTO` definido; sem ele, esse teste é pulado.
+
+Reprodução com os microdados (todos os comandos dentro de `src`, com `uv run python -m ...`):
+
+| Comando | O que faz | Variáveis |
+|---|---|---|
+| `coleta` | baixa a POF e confere os SHA-256 do manifesto | `CASE_AMBEV_RAW_ROOT` |
+| `preparo` | monta as tabelas de refeições de 2008 e 2017 | `CASE_AMBEV_RAW_ROOT`, `CASE_AMBEV_PROCESSADO_ROOT` (padrão `data/processed/v2`) |
+| `preparo auditoria` | reconstrói as refeições dos registros brutos até o alvo e confere as contagens | as mesmas |
+| `modelagem eda` | tabula o alvo por eixo no desenvolvimento de 2017 e em 2008, sem o teste | `CASE_AMBEV_PROCESSADO_ROOT` |
+| `modelagem temporal --saida <pasta>` | treina em 2008 e avalia no teste de 2017 | idem |
+| `modelagem explicar --saida <pasta>` | mede a importância dos campos no desenvolvimento | idem |
+
+`modelagem testar` abre o teste reservado e grava o artefato publicado. Ele já foi executado uma vez. Enquanto existir `teste.json` na pasta oficial, `testar` e `modelagem desenvolver` recusam rodar de novo: uma nova escolha de modelo exige outra versão do artefato. Sem `--saida`, `temporal` e `explicar` regravam os arquivos registrados em `artifacts/ocasiao_observada_v1/`; para conferir, use uma pasta separada.
 
 ## Data Card
 
-**Desenvolvimento: POF 2008–2009. Avaliação temporal reservada: POF 2017–2018.** O alvo de 2017 fica selado e **não foi aberto** na preparação documentada, nem os pesos. Os resultados descritivos de 2008 estão na [EDA](#eda-2008), reproduzível por `python -m occasion.eda_2008`.
+**Desenvolvimento: POF 2008–2009. Avaliação temporal reservada: POF 2017–2018.** Registro da primeira formulação: o alvo era guaraná entre episódios com pizza. O produto vigente usa outra divisão (veja [Occasion Score vigente](#produto-vigente)). O código desta formulação saiu da entrega em 24/11/2026; os números abaixo são o registro da época e não são regenerados pelos comandos atuais.
 
 **O que estes dados são, em uma frase.** A POF registra consumo alimentar: o que cada pessoa disse ter comido e bebido, quando e onde. Ela **não comprova** pedidos de delivery, a marca Antarctica nem o efeito de uma ação de marketing; por isso nenhuma leitura deste projeto fala de pedido, marca ou causalidade.
 
@@ -102,10 +195,10 @@ URLs completas, tamanhos e SHA-256 ficam no [manifesto de fontes](../configs/man
 
 URLs em `ftp.ibge.gov.br/Orcamentos_Familiares/`, pastas `Pesquisa_de_Orcamentos_Familiares_2008_2009` e `..._2017_2018` (subpasta `Microdados`).
 
-- **Contexto por UF** (`configs/contexto_uf.csv`): quatro indicadores do SIDRA (Censo 2000 e 2010; PNAD 2006 e 2015), só descritivos.
+- **Contexto por UF:** quatro indicadores do SIDRA (Censo 2000 e 2010; PNAD 2006 e 2015), só descritivos nesta formulação. O arquivo `configs/contexto_uf.csv` saiu da entrega em 25/11/2026, depois do teste descrito em [O que foi investigado e ficou fora do modelo final](#produto-vigente).
 - **Correção de renda:** IPCA de jan/2009 (2.906,74) e jan/2018 (4.930,72); fator 0,5895163 multiplica só a renda de 2017–2018.
 - **Ambiente:** Python 3.12, `duckdb==2.0.0`, `xlrd==2.0.2`, versões fixadas em `uv.lock`.
-- **Entradas definitivas de 2008:** `e2_2008.csv`, `features_comuns_2008.csv`, `identificadores_2008.csv`, `variaveis_nativas_2008.csv` e `matriz_logistica_2008.csv`. Caminho relativo à raiz dos dados: `pkg_f1_01/pe01_v2/execucao_2/saida`, informado por `CASE_AMBEV_SAIDA_ROOT` ou `--saida`. Os SHA-256 estão centralizados em [entradas_2008.json](../configs/entradas_2008.json) e são conferidos antes da leitura. A pasta antiga sem as matrizes é recusada. Duas execuções seguidas produziram os mesmos hashes.
+- **Entradas definitivas de 2008:** `e2_2008.csv`, `features_comuns_2008.csv`, `identificadores_2008.csv`, `variaveis_nativas_2008.csv` e `matriz_logistica_2008.csv`. Caminho relativo à raiz dos dados: `pkg_f1_01/pe01_v2/execucao_2/saida`, informado por `CASE_AMBEV_SAIDA_ROOT` ou `--saida`. Os SHA-256 ficavam centralizados em `configs/entradas_2008.json`, retirado da entrega junto com o código desta formulação, e eram conferidos antes da leitura. A pasta antiga sem as matrizes é recusada. Duas execuções seguidas produziram os mesmos hashes.
 
 ### 5. Regras de integração
 
@@ -113,7 +206,7 @@ URLs em `ftp.ibge.gov.br/Orcamentos_Familiares/`, pastas `Pesquisa_de_Orcamentos
 - **Junções de 2008** (consumo → moradores → domicílio): sem perda nem duplicação, 1.168 episódios antes e depois de cada junção; chaves únicas conferidas; 30 de 30 contagens de referência da auditoria do projeto reproduzidas (não são 30 estatísticas publicadas pelo IBGE).
 - **Alinhamento por `episodio_id`.** `variaveis_nativas`, `matriz_logistica` e `identificadores` têm a mesma ordem de linhas, por `episodio_id`. A EDA conferiu 14 checagens (mesmos episódios, ordem, UPA, peso, dia, região, área, idade, sexo, faixa de hora, interação e alvo dentro de refrigerante): 0 divergências em 1.168 episódios.
 - **Harmonização entre edições** (`configs/crosswalk.json`, `configs/variaveis.json`): dia da semana 1 = segunda … 7 = domingo; hora inteira 0–23; área em 3 níveis; escolaridade em 3 níveis; renda corrigida pelo IPCA. Uma única função (`derivar_nativas`) aplica as regras às duas edições.
-- **Fontes que não se integram.** Clima, feriados, Google Trends e OpenStreetMap ficam fora do núcleo: a POF não tem data de calendário nem município, então nenhuma chave coerente existe. Fontes de granularidades incompatíveis não são combinadas como se fossem a mesma observação.
+- **Fontes que não se integram.** Nesta formulação, clima, feriados, Google Trends e OpenStreetMap ficaram fora do núcleo: a POF não tem data de calendário nem município. Depois, clima e feriados foram testados com chave aproximada (semana de campo em 2008, mês em 2017) e não melhoraram o modelo; veja [o Occasion Score vigente, item 3](#produto-vigente). Fontes de granularidades incompatíveis não são combinadas como se fossem a mesma observação.
 
 ### 6. Estratégia anti-leakage
 
@@ -177,7 +270,7 @@ Não cobre: quem não consome pizza, menores de 10 anos, domicílios coletivos, 
 
 **Convenção de mascaramento (do projeto; sem garantia de anonimização).** Nas tabelas e figuras, níveis com 1 a 4 episódios saem com n, k e taxas suprimidos ("<5"). Níveis com n ≥ 5 saem completos, **inclusive com k de 1 a 4**. A convenção vale só para as tabelas e figuras geradas por código: a prosa deste documento cita contagens pequenas de estrutura (por exemplo 2 pessoas com 3 episódios). Os microdados do IBGE são públicos, o que não prova, por si, ausência de risco de identificação; nenhuma conferência de campos identificadores foi feita por este projeto.
 
-Reprodução: `python -m occasion.eda_2008 --destino <pasta>`, com `CASE_AMBEV_SAIDA_ROOT` apontando para as entradas de desenvolvimento e `CASE_AMBEV_RAW_ROOT` para os dados públicos (necessário ao W1). Os cinco arquivos são validados pelos SHA-256 de `configs/entradas_2008.json` (Data Card, item 4). Duas execuções seguidas produziram arquivos idênticos: 17 tabelas, 4 figuras e o registro. CSVs completos e registros ficam externos ao repositório; as tabelas necessárias à leitura estão neste documento.
+Reprodução na época: `python -m occasion.eda_2008 --destino <pasta>`, com `CASE_AMBEV_SAIDA_ROOT` apontando para as entradas de desenvolvimento e `CASE_AMBEV_RAW_ROOT` para os dados públicos (necessário ao W1). Esse módulo saiu da entrega em 24/11/2026; a EDA do alvo vigente é gerada por `modelagem eda` ([como executar](#produto-vigente)). Os cinco arquivos eram validados pelos SHA-256 de `configs/entradas_2008.json` (Data Card, item 4). Duas execuções seguidas produziram arquivos idênticos: 17 tabelas, 4 figuras e o registro. CSVs completos e registros ficam externos ao repositório; as tabelas necessárias à leitura estão neste documento.
 
 ### 1. Integridade das junções
 
@@ -359,9 +452,9 @@ Sem pesos, sexo, área, faixa etária e renda ficam entre 7,7% e 9,5%, com inter
 
 ## Protocolo de modelagem
 
-Versão 1.0, de 14/11/2026. Os parâmetros ficam em [`configs/protocolo_modelagem.json`](../configs/protocolo_modelagem.json). O SHA-256 desse arquivo foi registrado antes do primeiro ajuste, e a execução recusa um arquivo com hash diferente. Qualquer mudança exige nova versão do protocolo.
+Versão 1.0, de 14/11/2026, substituída pelo [protocolo v3](#produto-vigente). Registro histórico: o arquivo de parâmetros (`configs/protocolo_modelagem.json`), os módulos `occasion.*` e os artefatos desta versão saíram da entrega em 24/11/2026, e os comandos abaixo não rodam na árvore atual. Os parâmetros ficavam em `configs/protocolo_modelagem.json`. O SHA-256 desse arquivo foi registrado antes do primeiro ajuste, e a execução recusa um arquivo com hash diferente. Qualquer mudança exige nova versão do protocolo.
 
-Execução:
+Execução na época:
 
 ```bash
 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=src \
@@ -369,7 +462,7 @@ OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=src \
 python -m occasion.modelagem_2008 --comparar <execução 1> <execução 2>
 ```
 
-Variáveis de ambiente: `CASE_AMBEV_SAIDA_ROOT` aponta para as cinco entradas de 2008 (conferidas por [`entradas_2008.json`](../configs/entradas_2008.json)), e `CASE_AMBEV_RAW_ROOT` aponta para os microdados, usados no peso W1.
+Variáveis de ambiente: `CASE_AMBEV_SAIDA_ROOT` apontava para as cinco entradas de 2008 (conferidas por `entradas_2008.json`), e `CASE_AMBEV_RAW_ROOT` aponta para os microdados, usados no peso W1.
 
 ### 1. Dados e variáveis
 

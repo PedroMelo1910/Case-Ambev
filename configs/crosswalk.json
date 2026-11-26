@@ -1051,54 +1051,6 @@
           "variaveis": []
         }
       }
-    },
-    {
-      "conceito": "contexto_uf",
-      "candidata": null,
-      "comum": "parcial",
-      "entra_em_features_comuns": false,
-      "coluna_comum": null,
-      "teste": null,
-      "unidade": "percentuais por UF",
-      "acao": "Join por (edição, UF) com o ano de referência de cada edição; nada é imputado com dado de outra onda.",
-      "observacao": "Colunas anexadas à parte (bloco contexto_uf). F34 é o conceito 'domicílios com computador com internet', não posse de computador.",
-      "edicoes": {
-        "2008-2009": {
-          "nome": "Censo 2000 e PNAD 2006",
-          "variaveis": []
-        },
-        "2017-2018": {
-          "nome": "Censo 2010 e PNAD 2015",
-          "variaveis": []
-        }
-      }
     }
-  ],
-  "contexto_uf": {
-    "arquivo": "contexto_uf.csv",
-    "sha256": "d61ac4a5e611a316e671ef342a71fbd1c62225fbf54ae8ed88c5fc86ebe6d226",
-    "colunas": [
-      "pct_urbano_uf",
-      "pct_pop_0_14_uf",
-      "pct_pop_15_19_uf",
-      "pct_domicilios_com_computador_com_internet_uf"
-    ],
-    "chave": [
-      "edicao_pof",
-      "uf"
-    ],
-    "chaves_esperadas": 54,
-    "anos_de_referencia": {
-      "2008-2009": {
-        "censo": 2000,
-        "pnad": 2006
-      },
-      "2017-2018": {
-        "censo": 2010,
-        "pnad": 2015
-      }
-    },
-    "fonte": "IBGE/SIDRA, API de agregados: tabela 202 (população urbana, Censo), tabela 200 (população por grupos de idade, Censo) e tabela 2387 (PNAD, domicílios com computador com internet). Acesso público; licença específica não confirmada.",
-    "origem_dos_valores": "_planejamento/pesquisa/auditoria_features_2026_10_31/coleta_final_por_codigo/CONTEXTO_UF_FINAL.csv (cópia byte a byte; snapshots e URLs da consulta em MANIFESTO_FECHAMENTO.json, SHA-256 dos snapshots eb511dbb…, bc8f9478…, ababfcaf…)"
-  }
+  ]
 }

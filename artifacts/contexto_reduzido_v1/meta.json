@@ -1,8 +1,0 @@
-{
- "versao": "contexto_reduzido_v1",
- "sha256": {
-  "modelo.joblib": "2e9c4c19fe2e1252f4871f5336f5bfe517957fa9b186ea71073887c127a15224",
-  "resumo.json": "23054bb613ade5daed5c6be5a46c80c9a52ff6df423241912a398840897823c0"
- },
- "scikit-learn": "1.9.1"
-}

@@ -1,0 +1,54 @@
+{
+  "versao": "protocolo_v3_alvo_observado",
+  "data": "2026-11-24",
+  "substitui": "protocolo_v2_1_etapa3 e protocolo_v2_2_etapa4 (personas, gerador e Customer Score treinado em pedidos sinteticos saem da entrega)",
+  "pergunta_de_negocio": "Em quais contextos uma refeicao tem maior chance de incluir pizza e guarana juntos, e qual contexto vale priorizar para uma acao?",
+  "unidade": "refeicao observada com comida: pessoa x dia de registro (quadro) x hora inteira (V9015), com ao menos um item de comida pela regra da edicao (v2_classificacao_oficial_2017; v1_cadastro em 2008)",
+  "alvo": {
+    "positivo": "pizza (lista da edicao) e guarana identificado (8200301, 8200302, 8201601, 8201602, 8207401, 8207402) na mesma refeicao",
+    "negativo": "qualquer outra refeicao com comida",
+    "inconclusivo": "pizza + refrigerante nao especificado (8203501) sem guarana identificado: conta como 0 no alvo principal (guarana nao identificado); a taxa sem esses casos e o limite superior sao sensibilidades declaradas",
+    "fora_do_universo": [
+      "episodios so com agua, so com bebidas ou so com adicoes (nao sao refeicoes com comida)",
+      "linhas com hora invalida (nenhuma nas duas edicoes)",
+      "dias sem registro e moradores elegiveis sem registro: nao viram refeicoes negativas"
+    ],
+    "nao_mede": "marca (Guarana Antarctica), canal de compra, delivery ou preco"
+  },
+  "instante_de_previsao": "planejamento da acao: antes da refeicao, na vespera ou no inicio da semana. Conhecidos nesse instante: dia da semana, hora e periodo, UF/regiao, tipo de area, publico-alvo (faixa etaria, sexo, escolaridade; ou 'publico geral'), calendario (feriado da semana) e clima ja realizado ate a semana/mes anterior. Itens consumidos e o clima da propria refeicao so constroem o alvo ou entram em analise retrospectiva.",
+  "variaveis_por_bloco": {
+    "B1_calendario": ["dia_semana", "periodo", "hora", "dia_semana x periodo"],
+    "B2_territorio": ["grande_regiao", "area"],
+    "B3_publico": ["faixa_etaria", "sexo", "escolaridade"],
+    "B4_clima": ["anomalia de temperatura do periodo anterior por UF", "anomalia de chuva do periodo anterior por UF", "feriado na semana"]
+  },
+  "divisoes": {
+    "desenvolvimento_2017": "particao 'desenvolvimento' (SHA-256 do domicilio_id, resto != 0 por 5) da POF 2017-2018; selecao por validacao cruzada agrupada por UPA (5 dobras, GroupKFold, mesmas dobras para todos os candidatos e blocos)",
+    "teste_2017": "particao 'teste' (resto 0), aberta uma vez depois da escolha para o alvo conjunto",
+    "temporal_2008_2017": "treino na POF 2008-2009 inteira com as variaveis comuns harmonizadas (B1-B3), avaliacao na particao de teste de 2017; mede transporte no tempo do ranking e do nivel",
+    "clima": "experimento separado nas observacoes com chave de data: 2008 por UF x semana (PERIODO_REAL, se a data da semana 1 for verificada) e 2017 por UF x mes (ALUGUEL_ESTIMADO.V9010 + 1 = mes de abertura; V9010 = 6 tem ano ambiguo e fica fora). Comparacao B1, B1+B2+sazonalidade e B1+B2+sazonalidade+B4 nas mesmas linhas e dobras"
+  },
+  "exposicoes_declaradas": [
+    "POF 2017-2018 (particao teste): aberta em 24/11/2026 para os nos da jornada (artifacts/nos_jornada_v1/teste.json): P(pizza), P(refrigerante) e P(sabor | refrigerante) por regressao logistica. O alvo conjunto pizza + guarana nunca foi avaliado nessa particao. A particao segue como teste do alvo conjunto, com a ressalva de exposicao parcial dos componentes.",
+    "POF 2017-2018 (inteira): usada como teste externo do modelo historico de guarana entre refeicoes com pizza (protocolo v1.3, treino em 2008); taxas por dia e periodo de 2017 ja foram vistas nessa avaliacao e na auditoria de 31/10/2026.",
+    "POF 2008-2009: usada inteira no treino do modelo historico (contexto_reduzido_v1); positivos E2 por trimestre de campo (33, 29, 28, 11) ja publicados na investigacao de 30/10/2026."
+  ],
+  "candidatos": [
+    {"id": "global", "descricao": "taxa global do treino"},
+    {"id": "dia_periodo", "descricao": "frequencia historica por dia x periodo no treino, suavizada para a taxa global (m-estimativa com m escolhido no desenvolvimento entre 0, 50, 200, 1000 e 5000 refeicoes); combinacao inedita recebe a taxa global"},
+    {"id": "logistica", "descricao": "regressao logistica regularizada (L2, C em grade pequena) para o evento conjunto, com dia, periodo, hora, dia x periodo e os blocos"},
+    {"id": "dois_passos", "descricao": "P(pizza | x) x P(guarana | pizza, x), duas logisticas regularizadas; avaliado na mesma refeicao do modelo direto"},
+    {"id": "boosting", "descricao": "HistGradientBoostingClassifier, busca pequena (taxa de aprendizado, folhas, regularizacao) dentro do desenvolvimento, um processo por vez"}
+  ],
+  "criterio_do_vencedor": {
+    "metrica_principal": "perda logaritmica media nas 5 dobras do desenvolvimento (sem peso amostral)",
+    "regra": "vence a menor perda logaritmica media. Se a vantagem sobre um candidato mais simples for menor que 1 erro-padrao da diferenca pareada entre dobras, escolhe-se o mais simples (ordem: global < dia_periodo < logistica < dois_passos < boosting).",
+    "justificativa": "o score e usado como probabilidade (comparada a uma referencia e lida pelo marketing); a perda logaritmica penaliza probabilidades mal calibradas. Captura nos 20% priorizados mede o uso de ranking.",
+    "metricas_secundarias": ["Brier", "PR-AUC (precisao media)", "ROC-AUC", "ECE e calibracao por decil", "captura, precisao e lift nos 20% de maior score", "precisao, recall, F1 e matriz de confusao no corte dos 20%"],
+    "comparacao_obrigatoria": "toda metrica do vencedor e mostrada ao lado da regra dia x periodo; empate ou derrota e registrado"
+  },
+  "priorizacao_20": "ordenar as refeicoes pelo score e tomar exatamente 20% delas; empates na fronteira entram por fracao (valor esperado), para a regra dia x periodo nao ganhar ou perder por desempate arbitrario",
+  "incerteza": "bootstrap por UPA (1000 reamostras) no teste para metricas e diferencas; numero de positivos sempre ao lado da metrica; segmentos com menos de 30 positivos marcados como instaveis",
+  "pesos": "treino e metricas principais sem peso (unidade = refeicao da amostra); taxas ponderadas por PESO_FINAL reportadas para nivel populacional",
+  "variacao_util": "a tela so diz que o dia ou o periodo mudam a chance quando a importancia por permutacao do campo, medida no desenvolvimento, for maior que zero com folga (media menos 1 desvio > 0); variacao do score sozinha nao comprova ganho"
+}

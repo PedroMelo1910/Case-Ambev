@@ -12,31 +12,17 @@ data/raw/*
 *.novo
 artifacts/*
 !artifacts/.gitkeep
-# Excecoes especificas: manifesto congelado v1.3 e os artefatos B0 e L que ele cita (reproducao e auditoria). O resto de
-# artifacts/ continua ignorado, inclusive os demais artefatos e o historico de auditoria da execucao.
-!artifacts/modelagem_2008/
-artifacts/modelagem_2008/*
-!artifacts/modelagem_2008/manifesto_congelamento_v1_3.json
-!artifacts/modelagem_2008/execucao_6/
-artifacts/modelagem_2008/execucao_6/*
-!artifacts/modelagem_2008/execucao_6/artefatos/
-artifacts/modelagem_2008/execucao_6/artefatos/*
-!artifacts/modelagem_2008/execucao_6/artefatos/B0.json
-!artifacts/modelagem_2008/execucao_6/artefatos/B0.meta.json
-!artifacts/modelagem_2008/execucao_6/artefatos/L.joblib
-!artifacts/modelagem_2008/execucao_6/artefatos/L.meta.json
-# Versao reduzida (16/11/2026, so 2008): modelo, resumo agregado e hashes. Previsoes por episodio ficam fora.
-!artifacts/contexto_reduzido_v1/
-artifacts/contexto_reduzido_v1/*
-!artifacts/contexto_reduzido_v1/modelo.joblib
-!artifacts/contexto_reduzido_v1/resumo.json
-!artifacts/contexto_reduzido_v1/meta.json
-# Rede neural da jornada (personas): pesos, metadados e avaliacao agregada. Treinada na POF 2008, sem linha a linha.
-!artifacts/personas_rede_v1/
-artifacts/personas_rede_v1/*
-!artifacts/personas_rede_v1/rede.pt
-!artifacts/personas_rede_v1/meta.json
-!artifacts/personas_rede_v1/avaliacao.json
+# Excecao: o artefato publicado do Occasion Score observado (modelo, resumo agregado, metricas e hashes; nenhuma linha
+# individual). Sem ele a aplicacao exige refazer o treino com os microdados.
+!artifacts/ocasiao_observada_v1/
+artifacts/ocasiao_observada_v1/*
+!artifacts/ocasiao_observada_v1/modelo.joblib
+!artifacts/ocasiao_observada_v1/resumo.json
+!artifacts/ocasiao_observada_v1/meta.json
+!artifacts/ocasiao_observada_v1/teste.json
+!artifacts/ocasiao_observada_v1/desenvolvimento.json
+!artifacts/ocasiao_observada_v1/temporal.json
+!artifacts/ocasiao_observada_v1/explicacao.json
 
 # Ambiente
 .venv/
