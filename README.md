@@ -4,7 +4,7 @@
 
 [Abrir em outro computador](#instalacao-do-zero) · [Experimentar um cenário](#primeiro-uso) · [Resultados e testes](#dados-resultados-e-testes) · [Arquitetura](#fluxo-e-arquitetura) · [Repositório](#estrutura-do-repositorio) · [Documentação técnica](docs/documentacao.md)
 
-**Vídeo demonstrativo:** publicação pendente.
+**Vídeo demonstrativo:** [Assistir à demonstração no YouTube](https://youtu.be/OXuPWZmr52c).
 
 <a id="instalacao-do-zero"></a>
 ## Abrir em outro computador
