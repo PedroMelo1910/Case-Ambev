@@ -149,5 +149,3 @@ Case-Ambev/
 ├── uv.lock                   # versões resolvidas
 └── README.md
 ```
-
-Projeto acadêmico do Inteli, sem vínculo oficial com a Ambev.
