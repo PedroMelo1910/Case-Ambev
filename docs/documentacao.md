@@ -1,188 +1,132 @@
-# Documentação técnica — Occasion Intelligence: Pizza + Guaraná
+# Documentação técnica — Occasion Intelligence: Pizza e Guaraná
 
-- [Occasion Score vigente (protocolo v3)](#produto-vigente)
-- Registro histórico da primeira formulação (protocolo v1.0):
-  - [Data Card](#data-card)
-  - [Análise exploratória de 2008](#eda-2008)
-  - [Protocolo de modelagem](#protocolo-modelagem)
+[Voltar ao README](../README.md)
 
-<a id="produto-vigente"></a>
+Este documento descreve a construção e a avaliação do modelo que a aplicação usa. A [instalação, os comandos de reprodução e o mapa do repositório](../README.md) ficam no README. A especificação usada na escolha do modelo está no [protocolo](../configs/protocolo_v3_alvo_observado.json).
 
-## Occasion Score vigente (protocolo v3)
+## Índice
 
-Esta seção descreve o que a aplicação entregue faz hoje. O protocolo está em [`protocolo_v3_alvo_observado.json`](../configs/protocolo_v3_alvo_observado.json), de 24/11/2026, e os resultados estão em `artifacts/ocasiao_observada_v1/`. As seções seguintes (Data Card, EDA de 2008 e protocolo v1.0) registram a primeira formulação do projeto e continuam válidas como histórico, mas não descrevem o modelo publicado.
+1. [O que o modelo prevê](#o-que-preve)
+2. [Arquitetura e responsabilidades](#arquitetura)
+3. [Data Card](#data-card)
+4. [Análise exploratória e modelagem](#eda-modelagem)
+5. [Resultados que orientam a decisão](#resultados)
+6. [Dificuldades e alcance da previsão](#dificuldades)
+7. [O que foi investigado e ficou fora](#fora-do-modelo)
+8. [Rastreabilidade e marcos de versão](#reproducao)
 
-### 1. O que se prevê
+<a id="o-que-preve"></a>
+## 1. O que o modelo prevê
 
-O modelo estima a chance de uma refeição com comida incluir pizza e guaraná juntos, em um contexto escolhido pela equipe: dia da semana, período ou hora, grande região, tipo de área e, se a equipe quiser, faixa etária, sexo e escolaridade do público. A estimativa é feita em dois passos, multiplicando duas regressões logísticas regularizadas:
+A pergunta de marketing é em quais ocasiões vale testar uma oferta conjunta. O modelo estima a probabilidade de pizza e guaraná aparecerem em uma refeição com comida. As regras usam essa estimativa para indicar uma ação. O efeito da oferta sobre vendas exige um piloto com grupo de controle.
 
-chance de pizza e guaraná = chance de a refeição ter pizza × chance de ter guaraná entre as refeições com pizza
+A unidade, os códigos de alimentos e os denominadores estão no [Data Card](#data-card). A [avaliação](#resultados) compara o modelo à frequência por dia e período.
 
-- Unidade: refeição com comida, isto é, pessoa × dia de registro × hora inteira, com pelo menos um item de comida. Episódios só com água, só com bebidas ou só com adições ficam fora.
-- Positivo: pizza e um dos seis códigos de guaraná da POF (`8200301`, `8200302`, `8201601`, `8201602`, `8207401`, `8207402`) na mesma refeição. Refrigerante registrado sem sabor (`8203501`) conta como guaraná não identificado, ou seja, zero.
-- Instante de previsão: o planejamento da ação, antes da refeição. Só entram campos que a equipe conhece nesse momento.
+<a id="arquitetura"></a>
+## 2. Arquitetura e responsabilidades
 
-A POF registra consumo: o que a pessoa disse ter comido e bebido, quando e onde. A base não mede pedidos de delivery, vendas, canal, preço, a marca Guaraná Antarctica nem o efeito de uma campanha. Por isso o número da tela é uma chance de consumo observado, usada para comparar contextos. Quando a tela recomenda testar um combo, essa recomendação é uma decisão de marketing apoiada pela estimativa. O efeito do combo só aparece em um teste com grupo de controle, que a própria tela sugere como próximo passo.
+### Dois momentos, uma stack
 
-### 2. De onde vem a evidência
+O sistema separa o aprendizado, feito uma vez, do uso do produto, feito a cada consulta. Tudo roda localmente em Python; não há banco de dados, fila nem backend HTTP separado.
 
-| Papel | Base | Refeições | Positivos | Uso |
-|---|---|---|---|---|
-| Desenvolvimento | POF 2017–2018, partição `desenvolvimento` (cerca de 80% dos domicílios, por SHA-256 do domicílio) | 245.414 | 154 | comparação dos candidatos em 5 dobras agrupadas por UPA e ajuste do modelo publicado |
-| Teste reservado | POF 2017–2018, partição `teste` (resto 0 por 5) | 63.792 | 27 | aberto uma vez para o alvo conjunto, depois da escolha |
-| Avaliação temporal | treino na POF 2008–2009 inteira; avaliação no mesmo teste de 2017 | 253.935 no treino | 101 no treino | verifica se a ordem dos contextos aprendida em 2008 se mantém em 2017 |
+```mermaid
+flowchart TD
+    subgraph PREPARO["Preparação e aprendizado (uma vez)"]
+        COLETA["coleta.py · baixa a POF e confere SHA-256"] --> PREPARO2["preparo.py · refeições em Parquet"]
+        PREPARO2 --> MODELAGEM["modelagem.py + ocasiao_modelos.py · seleção, teste e avaliação"]
+        MODELAGEM --> ART[("artifacts/ocasiao_observada_v1/")]
+    end
 
-No treino, 0,546% das refeições têm pizza, 11,5% das refeições com pizza têm guaraná e a taxa conjunta é 0,063%. Com o peso de expansão do IBGE (`PESO_FINAL`), a taxa conjunta do desenvolvimento sobe para 0,086%, cerca de um terço acima. No teste ela é 0,042% sem peso e 0,035% com peso. Os números da tela são da amostra, sem peso, e servem para comparar contextos, não para dimensionar mercado.
+    subgraph USO["Uso do produto (cada consulta)"]
+        WEB["aplicacao/web · formulário"] --> SERV["aplicacao/servidor.py · API local"]
+        SERV --> AVALIAR["modelagem.avaliar · modelo em dois passos"]
+        AVALIAR --> REGRAS["aplicacao/regras.py · comparação e Decision Engine"]
+        REGRAS --> ENVELOPE(["Score, classificação, fatores, categoria, justificativa e metadados"])
+    end
 
-Escolha do modelo no desenvolvimento. Os candidatos foram taxa global, frequência por dia e período (a regra de referência), logística, dois passos e gradient boosting. A regra fixada antes da comparação manda escolher a menor perda logarítmica média, exceto quando a vantagem sobre um candidato mais simples fica abaixo de 1 erro-padrão. O vencedor foi o modelo de dois passos com calendário, território e público (C = 0,1). Contra a regra dia × período, a perda caiu 2,3e-4, com erro-padrão de 2,9e-5. Os hiperparâmetros foram escolhidos nas mesmas dobras, então essas perdas são levemente otimistas.
-
-Teste reservado, aberto uma vez (27 positivos; intervalos de 95% por bootstrap de 1.000 reamostras de UPAs):
-
-| Métrica | Modelo de dois passos | Regra dia × período | Taxa global | Diferença do modelo contra a regra |
-|---|---|---|---|---|
-| Perda logarítmica | 0,003331 | 0,003357 | 0,003748 | de −0,00021 a +0,00020: empate |
-| PR-AUC | 0,0037 | 0,0019 | 0,0004 | de +0,0002 a +0,0078: ganho |
-| ROC-AUC | 0,863 | 0,861 | 0,500 | sem intervalo |
-| Captura nos 20% de maior score | 74% (20 de 27) | 77% (20,9 de 27) | 20% | de −23 a +15 pontos: empate |
-| Observado / esperado | 0,69 | 0,68 | 0,67 | sem intervalo |
-
-O ganho do modelo está na PR-AUC, ou seja, em concentrar os positivos no topo da lista. Na perda logarítmica, a métrica principal do protocolo, e na captura dos 20% priorizados, houve empate com a regra dia × período. A ROC-AUC ficou praticamente igual.
-
-Avaliação temporal, com treino em 2008 e avaliação no teste de 2017, sem intervalo: o modelo de dois passos teve PR-AUC 0,0032 contra 0,0019 da regra, perda 0,003290 contra 0,003318 e captura de 81% (22 de 27) contra 68%. A ordem dos contextos aprendida em 2008 se manteve em 2017. O nível não deve ser comparado entre edições: em 2008, 11,8% das pizzas com refrigerante têm sabor não especificado, contra 2,6% em 2017, e os instrumentos de coleta são diferentes.
-
-Falhas e limitações que continuam valendo:
-
-- Superestimação do nível: no teste, o observado foi cerca de 0,69 do esperado para todos os candidatos, porque a taxa do teste (0,042%) ficou abaixo da do desenvolvimento (0,063%). O score deve ser lido como comparação com a média, não como frequência exata.
-- O segundo passo não discrimina no teste: a chance de guaraná entre refeições com pizza teve ROC-AUC 0,52 e perda 0,2778, pior que a de uma taxa constante (0,2739), em 363 refeições com pizza e 27 positivos. A ordenação vem quase toda da chance de pizza (ROC-AUC 0,88). Nos detalhes do resultado, a tela avisa que a variação do guaraná entre contextos não foi confirmada no teste.
-- Poucos positivos: 27 no teste, 26 deles à noite e nenhum no almoço ou na tarde. Todos os segmentos do teste ficam abaixo de 30 positivos e são marcados como instáveis.
-- Exposições anteriores declaradas no protocolo: a partição de teste já tinha sido usada para os componentes (pizza, refrigerante e sabor) em 24/11/2026, sem o alvo conjunto. A POF 2017 inteira e a 2008 inteira já tinham sido usadas na primeira formulação. Por isso o teste não é totalmente cego.
-- Campos que ajudam o modelo em geral, por permutação fora da dobra no desenvolvimento (`explicacao.json`, sem usar o teste): dia da semana, período, tipo de área, faixa etária e escolaridade. Região e sexo não passaram nesse critério. A tela só lista em "O que mais pesou" campos que passaram e que mudaram a estimativa do cenário. A mesma medida feita antes no teste reservado (em `teste.json` e `resumo.json`) não confirmava a escolaridade; ela fica como registro e não decide o que a tela mostra.
-- Sem pesos no treino e nas métricas principais. Grande parte dos positivos é consumo em casa (68% no treino), e a base não diz se a comida veio de delivery.
-
-### 3. O que foi investigado e ficou fora do modelo final
-
-As quatro fontes abaixo foram testadas em 25/11/2026 contra o modelo sem elas, nas mesmas linhas e dobras, pela perda logarítmica média em 5 dobras. Nenhuma melhorou a previsão, e o código, as configurações e os resultados saíram da entrega. A aplicação não depende de nenhuma delas.
-
-| Fonte | Como foi testada | Resultado | Decisão |
-|---|---|---|---|
-| Clima (ERA5 das 27 capitais) | desvio de temperatura e chuva do período anterior, por UF, somado a calendário, território e sazonalidade; 2008 por semana e 2017 por mês | piorou a perda em 2,0e-5 em 2008 (melhor em 1 de 5 dobras) e em 2,7e-5 em 2017; o clima da própria refeição, que nem existe no instante de previsão, também piorou | fora: não acrescenta sinal |
-| Feriados nacionais | feriado na janela da semana de coleta, junto com o clima anterior, em 2008; em 2017 só se conhece o mês, o que não permite marcar feriado | entrou na mesma variante que piorou a perda | fora: sem ganho e sem chave em 2017 |
-| Indicadores por estado (SIDRA: urbanização, faixas etárias e acesso a internet) | quatro indicadores por UF somados a calendário e território | piorou a perda do alvo conjunto em 2,9e-5 (melhor em 0 de 5 dobras) e a de pizza em 6,9e-5 | fora: a UF já está representada pela região e pelo tipo de área |
-| Delivery Center | volume de pedidos de comida por cidade, data e período (jan–abr/2021, 4 capitais), com clima previsto e feriado | o desvio de Poisson caiu pouco (15,82 para 15,66) e os coeficientes foram pequenos; a base não identifica pizza nem guaraná | fora: mede volume de pedidos, sem ligação com o alvo |
-
-### 4. Como executar
-
-Requisitos: [uv](https://docs.astral.sh/uv/), que instala o Python 3.12 e as versões fixadas em `uv.lock`. O artefato do modelo já está no repositório, então a aplicação não precisa dos microdados. Os comandos são os mesmos no PowerShell, no Prompt de Comando do Windows e no terminal do Linux ou macOS, a partir da raiz do projeto:
-
-```bash
-uv sync
-cd src
-uv run python -m aplicacao.servidor
+    ART --> SERV
 ```
 
-Depois, abra `http://127.0.0.1:8000` no navegador. O servidor confere os SHA-256 do artefato antes de subir e recusa arquivos alterados. `Ctrl+C` encerra. Para usar outra porta: `uv run python -m aplicacao.servidor --porta 8001`.
+### Dos registros à refeição
 
-Testes, também a partir da raiz: `uv run pytest`. Os testes usam dados sintéticos e o artefato publicado. A conferência do manifesto da auditoria só roda com `CASE_AMBEV_AUDITORIA_MANIFESTO` definido; sem ele, esse teste é pulado.
+`preparo.py` transforma os registros de consumo da POF em **refeições**: agrupa por pessoa × dia de registro × hora inteira (`V9015`), mantém apenas as refeições com ao menos um item de comida (pela classificação oficial da edição) e marca, em cada refeição, se há pizza, refrigerante, guaraná identificado e o sabor. As tabelas de escolhas saem em Parquet com um contrato (`*.contrato.json`) e passam por uma auditoria que reconstrói as contagens a partir dos registros brutos.
 
-Reprodução com os microdados (todos os comandos dentro de `src`, com `uv run python -m ...`):
+### Como o artefato é produzido e carregado
 
-| Comando | O que faz | Variáveis |
-|---|---|---|
-| `coleta` | baixa a POF e confere os SHA-256 do manifesto | `CASE_AMBEV_RAW_ROOT` |
-| `preparo` | monta as tabelas de refeições de 2008 e 2017 | `CASE_AMBEV_RAW_ROOT`, `CASE_AMBEV_PROCESSADO_ROOT` (padrão `data/processed/v2`) |
-| `preparo auditoria` | reconstrói as refeições dos registros brutos até o alvo e confere as contagens | as mesmas |
-| `modelagem eda` | tabula o alvo por eixo no desenvolvimento de 2017 e em 2008, sem o teste | `CASE_AMBEV_PROCESSADO_ROOT` |
-| `modelagem temporal --saida <pasta>` | treina em 2008 e avalia no teste de 2017 | idem |
-| `modelagem explicar --saida <pasta>` | mede a importância dos campos no desenvolvimento | idem |
+`modelagem.desenvolver` registra a especificação escolhida em `desenvolvimento.json`. A etapa `testar` ajusta essa especificação, avalia o conjunto reservado e grava o modelo, o resumo, as métricas e os metadados. As etapas `temporal` e `explicar` produzem os relatórios correspondentes. Na aplicação, `modelagem.carregar` compara as assinaturas do modelo e do resumo com as registradas em `meta.json` antes da primeira consulta.
 
-`modelagem testar` abre o teste reservado e grava o artefato publicado. Ele já foi executado uma vez. Enquanto existir `teste.json` na pasta oficial, `testar` e `modelagem desenvolver` recusam rodar de novo: uma nova escolha de modelo exige outra versão do artefato. Sem `--saida`, `temporal` e `explicar` regravam os arquivos registrados em `artifacts/ocasiao_observada_v1/`; para conferir, use uma pasta separada.
+### Campos que chegam à inferência
 
-## Data Card
+Na consulta, o contexto tem os campos que a equipe conhece no instante de previsão: `dia_semana`, `periodo` **ou** `hora`, `grande_regiao`, `area` e os três campos de público (`faixa_etaria`, `sexo`, `escolaridade`), cada um deles podendo ser `todos` (público geral). `preparo.preparar` valida e canoniza esse contexto. Quando a hora não é informada, o modelo pondera as horas do período pela frequência observada no treino; com público geral, usa a composição de público observada na região e no tipo de área.
 
-**Desenvolvimento: POF 2008–2009. Avaliação temporal reservada: POF 2017–2018.** Registro da primeira formulação: o alvo era guaraná entre episódios com pizza. O produto vigente usa outra divisão (veja [Occasion Score vigente](#produto-vigente)). O código desta formulação saiu da entrega em 24/11/2026; os números abaixo são o registro da época e não são regenerados pelos comandos atuais.
+### Da previsão à recomendação
 
-**O que estes dados são, em uma frase.** A POF registra consumo alimentar: o que cada pessoa disse ter comido e bebido, quando e onde. Ela **não comprova** pedidos de delivery, a marca Antarctica nem o efeito de uma ação de marketing; por isso nenhuma leitura deste projeto fala de pedido, marca ou causalidade.
+`aplicacao/regras.py` recebe a estimativa do contexto, a média de referência e a faixa de incerteza (obtida com modelos reajustados em reamostras de UPAs) e decide uma **faixa de comparação** — acima da média, abaixo, sem diferença demonstrada ou evidência insuficiente. O *Decision Engine* aplica regras explícitas, em ordem, sobre essa faixa: contexto acima da média → **testar um combo neste contexto** (hipótese a testar com grupo de controle); diferença não demonstrada → sem destaque; abaixo da média → baixa prioridade; evidência insuficiente → não priorizar. As regras não estimam retorno, volume nem canal.
 
-### 1. Unidade de análise
+Quando o modelo consegue calcular a previsão, o percentual principal é a estimativa para a ocasião. Se os dados são insuficientes para comparar, a tela identifica a estimativa como exploratória, mostra a média geral à parte e mantém a orientação de não priorizar. As contagens ficam em “Como o modelo calculou a estimativa”. Se um filtro de público fica em aberto e a pesquisa não registra nenhuma refeição que combine os demais, a tela indica qual filtro ampliar para obter uma previsão.
 
-O **episódio**: uma pessoa, em um dia de coleta, em uma hora, em que consumiu pizza (`pessoa × dia × hora`). Identificador `episodio_id`, único por edição. O instante de previsão é a refeição com pizza já definida e a bebida ainda não escolhida.
+### Escolha da stack
 
-| Contagem em 2008–2009 | Valor |
-|---|---|
-| Episódios com pizza | 1.168 |
-| Pessoas | 1.106 (1.046 com 1 episódio, 58 com 2 e 2 com 3) |
-| Unidades de consumo | 715 (na amostra, cada domicílio tem uma unidade de consumo com pizza) |
-| Domicílios | 715 |
-| UPAs (unidades primárias de amostragem) | 644 |
-| Estratos (UF × estrato) | 293, dos quais 144 com uma única UPA |
-| UFs | 27 |
+A stack segue a referência do TAPI e as necessidades desta aplicação: **DuckDB** lê os microdados de largura fixa e grava Parquet sem servidor de banco, adequado a uma base que cabe em arquivos locais; **scikit-learn** fornece a logística regularizada, a validação cruzada agrupada e as métricas de discriminação e calibração, suficientes para um alvo raro em que a calibração importa mais que capacidade bruta; a interface é um **servidor HTTP da biblioteca padrão** com HTML, CSS e JavaScript, sem framework, porque o produto é uma ferramenta local de consulta. As versões ficam fixadas em `uv.lock` e o ambiente é gerido pelo `uv`.
 
-A hora é arredondada pelo IBGE e não há data de calendário: só dia da semana e hora.
+### Contrato da aplicação
 
-### 2. Target (ground truth ou proxy)
+O pedido de `POST /api/avaliar` contém a chave `contexto`. O servidor identifica a versão publicada em `GET /api/opcoes` e nos metadados da resposta. Como o canal comercial não é observado, ele não é solicitado no formulário nem usado para segmentar as métricas. No envelope de sucesso, os campos de `data` são: `occasion_score`, `classification`, `top_factors`, `recommendation_category`, `recommendation_reason` e `model_metadata` (versão, modelo, alvo, unidade, fonte, avaliação no teste, regra do Decision Engine, avisos e SHA-256), além da leitura em linguagem de marketing e do próximo passo.
 
-`y_guarana = 1` quando o **mesmo episódio** contém um dos seis códigos de refrigerante de guaraná da POF (`8200301`, `8200302`, `8201601`, `8201602`, `8207401`, `8207402`); caso contrário, 0. O tipo de ativação nunca é o alvo.
+<a id="data-card"></a>
+## 3. Data Card
 
-**É registro autodeclarado de consumo.** Pedido, canal e marca não são observados; o alvo não permite identificá-los. A classificação da POF não tem código de marca de guaraná. Parte do refrigerante é "não especificado" (132 dos 655 episódios com refrigerante), então a taxa identificada pode subestimar o guaraná consumido.
+Este Data Card descreve o modelo **entregue**: alvo conjunto pizza + guaraná entre todas as refeições com comida, desenvolvimento e teste na POF 2017–2018, avaliação temporal com a POF 2008–2009. Todos os números vêm dos artefatos em `artifacts/ocasiao_observada_v1/` e das contagens verificadas em `data/processed/`.
 
-| Medida (2008–2009) | Numerador / denominador | Taxa |
-|---|---|---|
-| Guaraná entre episódios com pizza | 101 / 1.168 | 8,65% |
-| Algum refrigerante entre episódios com pizza | 655 / 1.168 | 56,1% |
-| Guaraná entre episódios com refrigerante | 101 / 655 | 15,4% |
+### 3.1 Unidade de análise
 
-**Interpretação do score:** frequência histórica estimada de guaraná em episódios com pizza de contextos parecidos, na amostra de 2008–2009. Não é probabilidade de pedir, preferência pela marca Antarctica, chance de compra nem efeito de promoção.
+A **refeição com comida**: uma pessoa, em um dia de registro, numa hora inteira, com pelo menos um item de comida (`pessoa × dia × hora`). Identificador `episodio_id`, único por edição. O instante de previsão é o planejamento da ação, antes da refeição: só entram campos conhecidos nesse momento. A hora é arredondada pelo IBGE; a edição não tem data de calendário, só dia da semana e hora.
 
-### 3. Dicionário de variáveis
+### 3.2 Alvo (ground truth ou proxy)
 
-A coluna "Disponível na aplicação" distingue entradas que **o usuário pode informar** (`sim`), informações indisponíveis no instante da consulta (`não`) e dados somente de diagnóstico. O sistema não observa automaticamente renda ou composição familiar. A especificação inicial tem 13 variáveis derivadas e 28 colunas, definidas em [variaveis.json](../configs/variaveis.json). `log_renda_pc` usa reais de jan/2009; a conversão da renda atual ainda precisa ser implementada na inferência.
+`alvo = 1` quando a **mesma refeição** tem pizza (lista da edição) **e** um dos seis códigos de guaraná identificado (`8200301`, `8200302`, `8201601`, `8201602`, `8207401`, `8207402`); caso contrário, 0. O tipo de ativação nunca é o alvo.
 
-| Variável | Descrição e derivação | Origem 2008–09 | Origem 2017–18 | Papel | Disponível na aplicação | Limitação |
-|---|---|---|---|---|---|---|
-| `hora_manha` | faixa de hora 5–10 h | `V9015` | `V9015` | treino, B1, boosting | sim | hora arredondada |
-| `hora_almoco` | faixa de hora 11–14 h | `V9015` | `V9015` | treino, B1, boosting | sim | hora arredondada |
-| `hora_tarde` | faixa de hora 15–18 h | `V9015` | `V9015` | treino, B1, boosting | sim | hora arredondada |
-| `hora_noite` | faixa de hora 19–4 h (madrugada entra na noite do mesmo dia) | `V9015` | `V9015` | treino, B1, boosting | sim | 2 episódios de 0–4 h em 2008 |
-| `sexta_a_domingo` | dia da semana em sexta, sábado ou domingo | `DIA_SEMANA` | `DIA_SEMANA` | treino | sim | composição de dias vem do calendário de coleta |
-| `regiao_norte` | grande região, a partir da UF | `COD_UF` | `UF` | treino, B2, segmento | sim | — |
-| `regiao_nordeste` | grande região, a partir da UF | `COD_UF` | `UF` | treino, B2, segmento | sim | — |
-| `regiao_sudeste` | grande região, a partir da UF | `COD_UF` | `UF` | treino, B2, segmento | sim | — |
-| `regiao_sul` | grande região, a partir da UF | `COD_UF` | `UF` | treino, B2, segmento | sim | — |
-| `regiao_centro_oeste` | grande região, a partir da UF | `COD_UF` | `UF` | treino, B2, segmento | sim | — |
-| `area_capital` | tipo de área: capital | estrato + planilha | estrato + planilha | treino | sim | 3 níveis porque limites metropolitanos mudaram |
-| `area_urbano_nao_capital` | tipo de área: urbano fora da capital | estrato + planilha | estrato + planilha | treino | sim | idem |
-| `area_rural` | tipo de área: rural | estrato + planilha | estrato + planilha | treino | sim | idem |
-| `idade_10_17` | faixa etária 10–17 | `IDADE_ANOS` | `V0403` | treino, segmento | sim | data de referência difere em menos de um ano |
-| `idade_18_29` | faixa etária 18–29 | `IDADE_ANOS` | `V0403` | treino, segmento | sim | idem |
-| `idade_30_44` | faixa etária 30–44 | `IDADE_ANOS` | `V0403` | treino, segmento | sim | idem |
-| `idade_45_59` | faixa etária 45–59 | `IDADE_ANOS` | `V0403` | treino, segmento | sim | idem |
-| `idade_60_mais` | faixa etária 60 ou mais | `IDADE_ANOS` | `V0403` | treino, segmento | sim | 52 episódios em 2008 |
-| `sexo_feminino` | sexo feminino (1) ou masculino (0) | `V0405` | `V0404` | treino | sim | — |
-| `escolaridade_ate_fundamental` | níveis 1–3 do IBGE | `NIVEL_INSTRUCAO_MORADOR` | `NIVEL_INSTRUCAO` | treino | sim | algoritmo de derivação do IBGE não documentado |
-| `escolaridade_medio` | níveis 4–5 do IBGE | `NIVEL_INSTRUCAO_MORADOR` | `NIVEL_INSTRUCAO` | treino | sim | idem |
-| `escolaridade_superior` | níveis 6–7 do IBGE | `NIVEL_INSTRUCAO_MORADOR` | `NIVEL_INSTRUCAO` | treino | sim | idem |
-| `log_renda_pc` | log da renda total da unidade de consumo ÷ todos os moradores, em reais de jan/2009 | `RENDA_TOTAL` | `RENDA_TOTAL` × 0,5895 (IPCA) | treino, segmento | sim | inclui renda não monetária e variação patrimonial; em reais de jan/2009, sem conversão de renda atual ainda |
-| `moradores_uc` | número de moradores da unidade de consumo | cadastro de moradores | cadastro de moradores | treino | sim | atributo compartilhado pelos episódios da mesma unidade de consumo |
-| `presenca_crianca_0_11` | há morador de 0 a 11 anos | cadastro de moradores | cadastro de moradores | treino | sim | — |
-| `presenca_adolescente_12_17` | há morador de 12 a 17 anos | cadastro de moradores | cadastro de moradores | treino | sim | associada à faixa 10–17 do próprio episódio |
-| `presenca_idoso_60_mais` | há morador com 60 anos ou mais | cadastro de moradores | cadastro de moradores | treino | sim | — |
-| `sexta_a_domingo_x_noite` | interação: sexta a domingo e faixa noite | derivada | derivada | treino | sim | igual ao produto de duas colunas acima |
-| `dia_semana` | dia da semana em 7 níveis (nativa) | `DIA_SEMANA` | `DIA_SEMANA` | B1 e boosting | sim | composição pelo calendário de coleta |
-| `idade` | idade em anos (nativa) | `IDADE_ANOS` | `V0403` | boosting, alternativa | sim | — |
-| `uf` | unidade da federação, 27 níveis | `COD_UF` | `UF` | só relato por segmento | sim | nenhuma UF tem 30 positivos |
-| `indicadores_uf_sidra` | 4 indicadores de Censo e PNAD por UF e edição | SIDRA 2000 e 2006 | SIDRA 2010 e 2015 | contexto descritivo, fora do modelo | somente diagnóstico | no treino são a UF reescrita |
-| `cod_upa` | UPA do episódio | cadastro | cadastro | grupo da validação cruzada e do bootstrap | não | — |
-| `peso_final` | peso da pessoa (calibrado por UF, sexo e idade) | `PESO_FINAL` | `PESO_FINAL` (selado) | só sensibilidade ponderada (W1) | não | ver item 8 |
-| `dia_coleta` | primeiro ou segundo dia de coleta | quadro 71/72 | quadro 72/73 | só diagnóstico | não | artefato do instrumento; não existe na consulta |
-| `local_refeicao_v9018` | local da refeição | `V9018` | `V9018` | nenhum | não | muda de conceito entre as edições |
-| `ocasiao_consumo` | ocasião declarada | ausente | presente | nenhum | não | não comparável |
-| `dia_atipico` | dia atípico declarado | ausente | presente | nenhum | não | não comparável |
-| `y_guarana` | alvo: guaraná no mesmo episódio | itens de consumo | itens de consumo (selado) | alvo | não | consumo autodeclarado; ver item 2 |
-| `y_refrigerante` | algum refrigerante no mesmo episódio | itens de consumo | itens de consumo | só descrição | não | parte do desfecho |
+É registro **autodeclarado de consumo**. Pedido, canal e marca não são observados. A classificação da POF não tem código de marca de guaraná. Pizza com refrigerante **sem sabor** (`8203501`) e sem guaraná identificado é tratada como guaraná não identificado (zero no alvo principal); o protocolo considera duas sensibilidades: excluir essas refeições ou contá-las como positivas.
 
-### 4. Fontes e versões
+**Atenção ao denominador.** Três medidas diferentes aparecem no projeto e respondem a perguntas distintas:
 
-Única fonte de registros observados de consumo: microdados da **POF** do IBGE, baixados por código com verificação de SHA-256 (`configs/manifesto_fontes.json`). Nenhuma outra fonte tem chave comum com o episódio (veja o item 5).
+| Medida | Numerador / denominador | 2017 desenv. | 2008 (inteira) |
+|---|---|---|---|
+| **Pizza e guaraná entre todas as refeições com comida** (o **alvo do modelo**) | positivos / refeições com comida | 154 / 245.414 = **0,063%** | 101 / 253.935 = **0,040%** |
+| Guaraná entre refeições **com pizza** (o segundo passo) | positivos / refeições com pizza | 154 / 1.340 = **11,5%** | 101 / 1.168 = **8,65%** |
+| Pizza entre todas as refeições com comida (o primeiro passo) | refeições com pizza / refeições com comida | 1.340 / 245.414 = **0,55%** | 1.168 / 253.935 = **0,46%** |
+
+O score da tela é a **primeira** medida: pizza e guaraná entre todas as refeições. Com o peso de expansão do IBGE (`PESO_FINAL`), a taxa conjunta do desenvolvimento sobe para 0,086%, cerca de um terço acima. Os números da tela são da amostra, sem peso, e servem para **comparar contextos**, não para dimensionar mercado.
+
+### 3.3 Dicionário de variáveis
+
+O modelo entregue usa apenas as variáveis comuns harmonizadas entre as duas edições, nos três blocos cumulativos do protocolo (B1 calendário, B2 território, B3 público). São esses os campos disponíveis no formulário. A coluna "No formulário" distingue o que o usuário informa (`sim`) do que entra só como grupo de análise (`não`).
+
+| Variável | Descrição | Origem 2008–09 | Origem 2017–18 | Bloco | No formulário |
+|---|---|---|---|---|---|
+| `dia_semana` | dia da semana (1 = segunda … 7 = domingo) | `DIA_SEMANA` | `DIA_SEMANA` | B1 | sim |
+| `periodo` | manhã (5–10h), almoço (11–14h), tarde (15–18h), noite (19–4h) | `V9015` | `V9015` | B1 | sim |
+| `hora` | hora inteira 0–23 (alternativa ao período) | `V9015` | `V9015` | B1 | sim |
+| `dia_semana × periodo` | interação dia × período (também é o baseline) | derivada | derivada | B1 | — |
+| `grande_regiao` | grande região, a partir da UF | `COD_UF` | `UF` | B2 | sim |
+| `area` | capital, urbano fora da capital ou rural | estrato + planilha | estrato + planilha | B2 | sim |
+| `faixa_etaria` | 10–17, 18–29, 30–44, 45–59, 60+ | `IDADE_ANOS` | `V0403` | B3 | sim (ou `todos`) |
+| `sexo` | feminino ou masculino | `V0405` | `V0404` | B3 | sim (ou `todos`) |
+| `escolaridade` | até fundamental, médio ou superior | `NIVEL_INSTRUCAO_MORADOR` | `NIVEL_INSTRUCAO` | B3 | sim (ou `todos`) |
+| `upa` | UPA da refeição | cadastro | cadastro | — | não (grupo da validação e do bootstrap) |
+| `peso` | peso de expansão da pessoa | `PESO_FINAL` | `PESO_FINAL` | — | não (só taxa ponderada) |
+| `local_v9018` | local da refeição | `V9018` | `V9018` | — | não (só diagnóstico de "em casa") |
+
+**Campos disponíveis × campos que demonstraram importância.** Todos os campos acima marcados "sim" aparecem no formulário. A importância para o modelo, medida por permutação fora da dobra no desenvolvimento (`explicacao.json`, sem usar o teste), separa os que o modelo usa com folga — **dia da semana, período, tipo de área, faixa etária e escolaridade** — dos que não passaram nesse critério: **região e sexo**. A tela só lista em "O que mais pesou" campos que passaram e que mudaram a estimativa do cenário.
+
+**Tratamento de casos especiais.**
+- *Refeições só com bebidas, só com água ou só com adições* não são refeições com comida e ficam fora do universo (não viram negativos).
+- *Adições* (açúcar, adoçante) entram em linhas próprias em 2017–18 e ficam de fora da construção da refeição; 2008–09 não tem esse bloco.
+- *Refrigerante de sabor desconhecido* (`8203501`) com pizza e sem guaraná identificado conta como zero no alvo principal; o protocolo especifica as duas sensibilidades descritas na seção 3.2.
+
+### 3.4 Fontes e versões
+
+Única fonte de consumo observado: microdados da **POF** do IBGE, baixados por código com verificação de SHA-256 (`configs/manifesto_fontes.json`). Nenhuma outra fonte tem chave comum com a refeição (item 3.5).
 
 | Arquivo | Edição | Baixado em |
 |---|---|---|
@@ -191,377 +135,159 @@ A coluna "Disponível na aplicação" distingue entradas que **o usuário pode i
 | `Dados_20230713.zip` | 2017–2018 | 30/10/2026 |
 | `Documentacao_20230713.zip` | 2017–2018 | 27/10/2026; recuperado em 09/11/2026 |
 
-URLs completas, tamanhos e SHA-256 ficam no [manifesto de fontes](../configs/manifesto_fontes.json), usado pelo pipeline na verificação dos downloads.
+URLs em `ftp.ibge.gov.br/Orcamentos_Familiares/`, pastas `Pesquisa_de_Orcamentos_Familiares_2008_2009` e `..._2017_2018`, subpasta `Microdados`. Tamanhos e SHA-256 completos (de cada zip e de cada membro extraído) ficam no [manifesto de fontes](../configs/manifesto_fontes.json), conferidos pelo pipeline na coleta. Ambiente: Python 3.12, `duckdb==2.0.0`, `scikit-learn==1.9.1`, `xlrd==2.0.2`, versões fixadas em `uv.lock`.
 
-URLs em `ftp.ibge.gov.br/Orcamentos_Familiares/`, pastas `Pesquisa_de_Orcamentos_Familiares_2008_2009` e `..._2017_2018` (subpasta `Microdados`).
+### 3.5 Regras de integração
 
-- **Contexto por UF:** quatro indicadores do SIDRA (Censo 2000 e 2010; PNAD 2006 e 2015), só descritivos nesta formulação. O arquivo `configs/contexto_uf.csv` saiu da entrega em 25/11/2026, depois do teste descrito em [O que foi investigado e ficou fora do modelo final](#produto-vigente).
-- **Correção de renda:** IPCA de jan/2009 (2.906,74) e jan/2018 (4.930,72); fator 0,5895163 multiplica só a renda de 2017–2018.
-- **Ambiente:** Python 3.12, `duckdb==2.0.0`, `xlrd==2.0.2`, versões fixadas em `uv.lock`.
-- **Entradas definitivas de 2008:** `e2_2008.csv`, `features_comuns_2008.csv`, `identificadores_2008.csv`, `variaveis_nativas_2008.csv` e `matriz_logistica_2008.csv`. Caminho relativo à raiz dos dados: `pkg_f1_01/pe01_v2/execucao_2/saida`, informado por `CASE_AMBEV_SAIDA_ROOT` ou `--saida`. Os SHA-256 ficavam centralizados em `configs/entradas_2008.json`, retirado da entrega junto com o código desta formulação, e eram conferidos antes da leitura. A pasta antiga sem as matrizes é recusada. Duas execuções seguidas produziram os mesmos hashes.
+- **Chaves.** Dentro de cada edição, a pessoa é UPA + domicílio + unidade de consumo + informante; a UPA é UF + sequência + dígito. As edições **nunca** são unidas por chave: comparam-se apenas por conceitos harmonizados (`configs/crosswalk.json`, `configs/variaveis.json`): dia da semana 1–7, hora inteira 0–23, área em 3 níveis, escolaridade em 3 níveis. Uma única função de derivação aplica as regras às duas edições.
+- **Conferência das junções.** A auditoria reconstrói a refeição a partir dos registros de consumo e confere o total de refeições com pizza: 1.168 em 2008 e 1.703 em 2017. Os relatórios locais da auditoria podem ser gerados pelos comandos do README.
+- **Contexto externo.** A chave da refeição não identifica município e data de calendário exata. A seção 7 descreve as aproximações territoriais e temporais investigadas e o estudo separado do volume de pedidos.
 
-### 5. Regras de integração
+### 3.6 Estratégia anti-leakage
 
-- **Chaves.** Pessoa = UPA, domicílio, unidade de consumo e informante dentro de cada edição; UPA = UF (2) + sequência (3) + dígito (1). As edições nunca são unidas por chave: elas só se comparam por conceitos harmonizados.
-- **Junções de 2008** (consumo → moradores → domicílio): sem perda nem duplicação, 1.168 episódios antes e depois de cada junção; chaves únicas conferidas; 30 de 30 contagens de referência da auditoria do projeto reproduzidas (não são 30 estatísticas publicadas pelo IBGE).
-- **Alinhamento por `episodio_id`.** `variaveis_nativas`, `matriz_logistica` e `identificadores` têm a mesma ordem de linhas, por `episodio_id`. A EDA conferiu 14 checagens (mesmos episódios, ordem, UPA, peso, dia, região, área, idade, sexo, faixa de hora, interação e alvo dentro de refrigerante): 0 divergências em 1.168 episódios.
-- **Harmonização entre edições** (`configs/crosswalk.json`, `configs/variaveis.json`): dia da semana 1 = segunda … 7 = domingo; hora inteira 0–23; área em 3 níveis; escolaridade em 3 níveis; renda corrigida pelo IPCA. Uma única função (`derivar_nativas`) aplica as regras às duas edições.
-- **Fontes que não se integram.** Nesta formulação, clima, feriados, Google Trends e OpenStreetMap ficaram fora do núcleo: a POF não tem data de calendário nem município. Depois, clima e feriados foram testados com chave aproximada (semana de campo em 2008, mês em 2017) e não melhoraram o modelo; veja [o Occasion Score vigente, item 3](#produto-vigente). Fontes de granularidades incompatíveis não são combinadas como se fossem a mesma observação.
+- **Instante de previsão:** o planejamento da ação, antes da refeição. Toda variável precisa existir nesse instante.
+- **Nunca entram:** o local da refeição, a ocasião declarada, o dia atípico, o dia de coleta e qualquer indicador de bebida da própria refeição.
+- **Nada aprendido dos dados na preparação.** A preparação dos microdados e a validação da entrada da aplicação produzem campos no mesmo domínio. O treino ajusta os parâmetros usando somente o desenvolvimento.
+- **Validação no desenvolvimento.** Nas cinco dobras, cada unidade primária de amostragem (UPA) fica inteira em uma dobra. A partição reservada é definida separadamente, por domicílio. As reamostragens para os intervalos preservam UPAs inteiras.
+- **Separação de partições:** desenvolvimento e teste de 2017 são divididos pelo SHA-256 do domicílio (resto 0 por 5 = teste). O teste do alvo conjunto foi aberto **uma única vez**, depois da escolha.
+- **Exposição prévia declarada.** A partição de teste já havia sido usada em 24/11/2026 para os componentes (pizza, refrigerante e sabor), sem o alvo conjunto; a POF 2017 inteira e a 2008 inteira já tinham sido usadas na formulação anterior. Por isso o teste **não é totalmente cego**, e a avaliação temporal deve ser lida com essa ressalva.
 
-### 6. Estratégia anti-leakage
+### 3.7 População coberta e excluída
 
-- **Instante de previsão:** a refeição com pizza está definida; a bebida ainda não. Toda variável precisa existir nesse instante.
-- **Nunca entram:** `dia_coleta`, local da refeição, ocasião, dia atípico e qualquer indicador de refrigerante do episódio (tabela do item 3).
-- **Nada é aprendido dos dados na preparação.** Imputação, padronização e cortes por quantil ficam dentro das dobras de treino. Os tercis de renda da EDA são só descritivos e não entram na matriz do modelo.
-- **Mesmo processamento no treino e na inferência**, pela função única de derivação.
-- **Validação:** divisão sempre agrupada por UPA (pessoas e domicílios do mesmo lado); incerteza por bootstrap de UPAs inteiras; seleção só com dados de 2008.
-- **Separação temporal:** desenvolvimento em 2008–2009; avaliação em 2017–2018, aberta **uma única vez**, com protocolo, variáveis, modelos e limiares congelados antes. O alvo e os pesos de 2017 estão em pasta somente leitura, fora do repositório, e **não foram abertos**. O módulo de 2017 nunca importa as listas de bebidas.
-- **Exposição prévia:** os agregados de 2017 já eram conhecidos antes do congelamento: 1.703 episódios com pizza e 181 positivos (10,6%; 9,5% ponderado). Portanto, a avaliação temporal não é cega e deve ser interpretada com essa limitação.
+**Coberta:** moradores com 10 anos ou mais da subamostra de consumo alimentar da POF, em domicílios particulares, que registraram pelo menos uma refeição com comida.
 
-### 7. População coberta e excluída
+**Excluídos:** menores de 10 anos; domicílios coletivos; pessoas sem registro de consumo; episódios sem comida.
 
-**Coberta:** moradores com 10 anos ou mais da subamostra de consumo alimentar da POF, em domicílios particulares, que consumiram pizza em algum dia de registro.
-
-**Excluídos:** menores de 10 anos; domicílios coletivos; pessoas sem registro de consumo; quem não comeu pizza nos dias de registro.
-
-| Passo (2008–2009) | Contagem |
-|---|---|
-| Pessoas com consumo registrado | 34.003 |
-| Episódios (pessoa × dia × hora) no total | 287.680 |
-| Episódios com pizza (população do estudo) | 1.168, de 1.106 pessoas |
-| 2017–2018: episódios elegíveis (alvo selado) | 1.703 (contagem já verificada; sem nova tabulação) |
-
-Não cobre: quem não consome pizza, menores de 10 anos, domicílios coletivos, consumo fora da janela de registro, nem qualquer comportamento de compra.
-
-### 8. Vieses e limitações
-
-- **Consumo registrado, não compra.** Sem informação de quem comprou, quanto pagou ou se foi combo. A POF registra consumo alimentar e **não comprova** pedidos de delivery, a marca Antarctica nem o efeito de uma ação de marketing.
-- **Sem canal.** Delivery, restaurante e aplicativo não existem no bloco de consumo.
-- **Sem marca.** Nenhum código de marca de guaraná; o alvo é um limite inferior de guaraná.
-- **Instrumentos diferentes.** 2008–09 é registro alimentar preenchido pela pessoa; 2017–18 é recordatório de 24 h por entrevista. A diferença de taxa entre edições mistura tempo e instrumento e não é tendência. A água só é registrada em 2017–18.
-- **Calendário de coleta.** Domingo é 13,4% dos episódios de pizza em 2008 e 32,2% em 2017; 41% dos episódios de 2008 estão no 1º dia de coleta e 59% no 2º. Nem pesos nem modelo removem esse efeito de desenho.
-- **Dependência entre episódios.** 752 dos 1.168 episódios (64%) estão em domicílios com 2 ou mais episódios; ICC ≈ 0,65 entre moradores do mesmo domicílio. Os 101 positivos estão em 75 domicílios e 70 UPAs; **não são 101 observações independentes**. Os intervalos das tabelas e figuras são percentis do bootstrap de UPAs; o intervalo de Wilson aparece só como comparação e supõe episódios independentes. Com todos os resultados iguais (k = 0 ou k = n), o bootstrap é degenerado e não gera intervalo.
-- **Grupos pequenos.** Manhã (65 episódios, 2 positivos) e almoço (89, 2) têm suporte baixo; nenhuma UF tem 30 positivos; 144 de 293 estratos têm uma só UPA. Zero observado não é probabilidade zero.
-- **Pesos.** O IBGE fornece o peso da pessoa (W0), constante dentro da pessoa. O peso W1 (peso da pessoa ÷ dias de registro) é **derivado** e usado somente em análise de sensibilidade; a leitura principal é sem pesos. Pesos variam de 349 (percentil 1) a 33.901 (percentil 99); dois episódios têm peso 1,0.
-- **Colinearidade.** As 28 colunas incluem 5 conjuntos completos de indicadores (hora, região, área, idade, escolaridade) que somam 1 e são colineares com o intercepto; exigem penalização, como ridge, ou um nível de referência.
-- **Representatividade.** Dados de 2008–2009, com mais de 15 anos; os contextos de hoje podem ser outros.
-- **Sem causalidade.** Nenhuma leitura pode afirmar que uma ativação venderá mais.
-
-### 9. Licença e cuidados com LGPD
-
-- **Licença.** A licença específica dos microdados do IBGE **não foi confirmada**. Microdados e derivados linha a linha não são redistribuídos.
-- **Redistribuição.** Microdados e derivados linha a linha **nunca** entram no repositório (`.gitignore`); só tabelas agregadas e figuras são publicadas. Convenção implementada (do projeto, sem garantia): em tabelas e figuras, níveis com 1 a 4 episódios saem com n, k e taxas suprimidos; níveis com n ≥ 5 saem completos, inclusive com k de 1 a 4. A prosa dos documentos cita algumas contagens pequenas de estrutura e não segue essa convenção.
-- **LGPD.** Os microdados tratam de pessoas reais. O projeto **não conferiu** campo a campo a ausência de identificadores diretos nem o risco de reidentificação por combinação de variáveis; a disponibilidade pública dos microdados não prova ausência de risco, e o limiar n < 5 não é garantia de anonimização. Por precaução, são tratados como potencialmente reidentificáveis. Não há tentativa de reidentificação nem de cruzamento com outras bases pessoais.
-
-<a id="eda-2008"></a>
-
-## Análise exploratória — POF 2008–2009
-
-**Dados de desenvolvimento: POF 2008–2009.** Leitura principal **sem pesos**; n = episódios e k = episódios com guaraná. Os achados são **exploratórios** e não constituem seleção de variáveis por desempenho.
-
-**Avaliação temporal:** houve exposição prévia a resultados agregados de 2017; esta análise usa somente 2008. Os detalhes e as restrições estão no [Data Card, item 6](#6-estratégia-anti-leakage).
-
-**Intervalos de 95%, sempre com o método nomeado.** As tabelas e figuras usam dois métodos, nunca misturados na mesma coluna:
-- **IC boot.**: percentil do bootstrap de UPAs inteiras (5.000 réplicas, semente 20261113; limites = quantis 2,5% e 97,5% das réplicas, com interpolação linear, o "tipo 7"). Respeita a dependência entre episódios da mesma UPA, mas ignora o estrato e é condicional à presença do nível na reamostra. É o intervalo das figuras.
-- **Wilson**: intervalo analítico que **supõe episódios independentes**. Aparece só na tabela 5.1, como comparação, e nos casos sem variação. Nenhum dos dois é limite garantido do outro.
-- **Bootstrap degenerado.** Quando todos os episódios de um nível têm o mesmo resultado (k = 0 ou k = n), toda réplica repete esse valor: a variância estimada é zero e a dependência entre episódios não entra no intervalo. Nesses casos o IC boot. **não é publicado** ("degenerado") e as figuras mostram "zero observado" sem ponto nem barra. Ocorre em `sexta a domingo · manhã` (k = 0 em 21) e em 4 UFs.
-- **Réplicas descartadas.** Uma réplica é descartada para um nível quando nenhuma UPA daquele nível é sorteada (taxa indefinida). Nos níveis com n ≥ 5 só três UFs perderam réplicas (UF 16 e 17: 1 de 5.000; UF 23: 5 de 5.000). O contraste de sexta a domingo não descartou nenhuma. Os registros de execução (fora do repositório) trazem a contagem por nível.
-- **Estabilidade.** Repetindo as tabelas de período, dia da semana e região com cinco sementes, os limites do IC boot. variam até 0,6 ponto percentual (período), 0,45 (dia) e 0,29 (região); o contraste, 0,23. Números citados abaixo têm, portanto, incerteza de Monte Carlo da ordem de 0,3 a 0,6 ponto; casas decimais além da primeira não são informativas.
-
-**Convenção de mascaramento (do projeto; sem garantia de anonimização).** Nas tabelas e figuras, níveis com 1 a 4 episódios saem com n, k e taxas suprimidos ("<5"). Níveis com n ≥ 5 saem completos, **inclusive com k de 1 a 4**. A convenção vale só para as tabelas e figuras geradas por código: a prosa deste documento cita contagens pequenas de estrutura (por exemplo 2 pessoas com 3 episódios). Os microdados do IBGE são públicos, o que não prova, por si, ausência de risco de identificação; nenhuma conferência de campos identificadores foi feita por este projeto.
-
-Reprodução na época: `python -m occasion.eda_2008 --destino <pasta>`, com `CASE_AMBEV_SAIDA_ROOT` apontando para as entradas de desenvolvimento e `CASE_AMBEV_RAW_ROOT` para os dados públicos (necessário ao W1). Esse módulo saiu da entrega em 24/11/2026; a EDA do alvo vigente é gerada por `modelagem eda` ([como executar](#produto-vigente)). Os cinco arquivos eram validados pelos SHA-256 de `configs/entradas_2008.json` (Data Card, item 4). Duas execuções seguidas produziram arquivos idênticos: 17 tabelas, 4 figuras e o registro. CSVs completos e registros ficam externos ao repositório; as tabelas necessárias à leitura estão neste documento.
-
-### 1. Integridade das junções
-
-As cinco entradas de 2008 (`e2`, `features_comuns`, `identificadores`, `variaveis_nativas`, `matriz_logistica`) foram alinhadas por `episodio_id`. As matrizes não trazem esse identificador: o alinhamento delas é por posição, conferido contra os campos comuns.
-
-| Checagem | Resultado |
-|---|---|
-| Mesmos 1.168 episódios, sem duplicados, na mesma ordem (por `episodio_id`) | passa |
-| UPA e peso de `identificadores` = `e2` | 0 divergências em 1.168 |
-| Dia da semana, região, área, idade e sexo das variáveis nativas = `features_comuns` | 0 divergências |
-| Faixa de hora derivada da hora; matriz = nativas; sexta a domingo nativas = matriz | 0 divergências |
-| Alvo de guaraná contido em "algum refrigerante" | 0 divergências |
-| Peso constante dentro da pessoa | 0 pessoas com mais de um peso |
-| Valores desconhecidos nas 28 colunas; renda inválida | 0; 1.168 rendas válidas |
-
-As taxas são 7,9927% com W1, 8,011% com o peso integral da pessoa (W0) e 8,647% sem pesos.
-
-### 2. Contagens e dependência entre episódios
-
-| Unidade | Contagem | Observação |
+| Passo | 2008–2009 | 2017–2018 |
 |---|---|---|
-| Episódios (positivos) | 1.168 (101) | |
-| Pessoas | 1.106 | 1.046 com 1 episódio, 58 com 2, 2 com 3 |
-| Unidades de consumo e domicílios | 715 e 715 | uma unidade de consumo com pizza por domicílio |
-| UPAs | 644 | 351 com 1 episódio; 817 episódios em UPAs com 2 ou mais |
-| Estratos (UF × estrato) | 293 | 144 com uma única UPA |
-| UFs | 27 | |
+| Pessoas com consumo registrado | 34.003 | 46.164 |
+| Refeições com comida (unidade de análise) | 253.935 | 309.206 (245.414 desenvolvimento + 63.792 teste) |
+| Refeições com pizza | 1.168 | 1.340 (desenv.) + 363 (teste) = 1.703 |
+| Refeições com pizza e guaraná (positivos) | 101 | 154 (desenv.) + 27 (teste) = 181 |
 
-- **752 dos 1.168 episódios (64%)** estão em domicílios com 2 ou mais episódios (299 domicílios).
-- Os 101 positivos estão em **75 domicílios e 70 UPAs**. Em 17 domicílios há 2 positivos, em 3 há 3 e em 1 há 4; 47 positivos estão em domicílios com 2 ou mais positivos. Eles **não são 101 observações independentes**.
-- Variáveis de domicílio (moradores, presenças, renda) são constantes entre os episódios do mesmo domicílio: 0 domicílios com valores diferentes.
+Não cobre nenhum comportamento de compra, pagamento, canal ou marca.
 
-### 3. Distribuição das variáveis, ausências, extremos e categorias raras
+### 3.8 Vieses e limitações
 
-**Ausências.** Nenhuma das 28 colunas tem valor desconhecido; todas as 1.168 rendas são válidas.
+- **Consumo registrado, não compra.** Sem informação de quem comprou, quanto pagou ou se foi combo. A POF não comprova pedidos de delivery, a marca Antarctica nem o efeito de uma ação.
+- **Sem canal e sem marca.** Delivery, restaurante e aplicativo não existem no bloco de consumo; a marca não é identificada. Bebidas registradas sem sabor podem deixar ocorrências de guaraná fora do alvo.
+- **Instrumentos diferentes entre edições.** 2008–09 é registro alimentar preenchido pela pessoa; 2017–18 é recordatório de 24 h por entrevista. A diferença de nível entre edições mistura tempo e instrumento e não é tendência. A água só é registrada em 2017–18.
+- **Calendário de coleta.** A composição de dias vem do desenho de campo; domingo pesa muito mais em 2017 do que em 2008. Nem pesos nem modelo removem esse efeito de desenho.
+- **Dependência entre refeições.** Refeições da mesma pessoa, domicílio e UPA não são independentes; os intervalos usam bootstrap de UPAs inteiras. Com poucos positivos, grupos pequenos têm estimativas instáveis.
+- **Alvo raro.** Pizza e guaraná juntos são cerca de 0,063% das refeições no desenvolvimento e 0,042% no teste; todos os segmentos do teste têm menos de 30 positivos e são marcados como instáveis.
+- **Representatividade.** A POF 2017–2018 é de 2017–2018; os contextos de hoje podem ser outros. Nenhuma leitura pode afirmar que uma ativação venderá mais.
 
-**Extremos.**
+### 3.9 Licença e cuidados com LGPD
 
-| Variável | Resumo |
+- **Licença.** A licença específica dos microdados do IBGE **não foi confirmada**; aceite de risco residual registrado em 07/11/2026. Microdados e derivados linha a linha **nunca** entram no repositório (`.gitignore`); só o artefato do modelo, tabelas agregadas e figuras são publicados.
+- **LGPD.** Os microdados tratam de pessoas reais. O projeto **não conferiu** campo a campo a ausência de identificadores diretos nem o risco de reidentificação por combinação de variáveis; a disponibilidade pública dos microdados não prova ausência de risco. Por precaução, são tratados como potencialmente reidentificáveis, sem tentativa de reidentificação nem cruzamento com outras bases pessoais.
+
+<a id="eda-modelagem"></a>
+## 4. Análise exploratória e modelagem
+
+### 4.1 Onde a ocasião se concentra (desenvolvimento de 2017)
+
+Contagens da partição de desenvolvimento da POF 2017–2018, somadas sobre os sete dias da semana a partir de `suporte_dia_periodo` no [resumo publicado](../artifacts/ocasiao_observada_v1/resumo.json).
+
+| Período | Refeições com comida | Com pizza e guaraná | Frequência |
+|---|---:|---:|---:|
+| Manhã | 66.989 | 4 | 0,006% |
+| Almoço | 70.887 | 3 | 0,004% |
+| Tarde | 45.338 | 9 | 0,020% |
+| Noite | 62.200 | 138 | 0,222% |
+
+Das 154 refeições com a combinação, 138 ocorreram à noite. Domingo à noite reuniu 59 em 11.633 refeições. Essa concentração justifica comparar o modelo com uma regra que já conhece dia e período.
+
+### 4.2 O modelo em dois passos
+
+O alvo conjunto é modelado como o produto de duas regressões logísticas regularizadas (L2), ajustadas na mesma refeição:
+
+> P(pizza e guaraná | contexto) = P(pizza | contexto) × P(guaraná | pizza, contexto)
+
+Separar os dois passos tem uma razão de interpretação: pizza é o evento com sinal (varia bastante entre contextos) e guaraná entre as pizzas é o evento raro e difícil. O modelo usa os três blocos cumulativos de variáveis (B1 calendário, B2 território, B3 público) com penalização ridge (C = 0,1 nos dois passos).
+
+### 4.3 Candidatos, referência e critério de escolha
+
+Cinco candidatos foram comparados no desenvolvimento, com as **mesmas 5 dobras agrupadas por UPA**: taxa global, frequência por dia × período (a **referência** obrigatória, baseline sem aprendizado de máquina), logística, modelo em dois passos e gradient boosting. A métrica principal é a **perda logarítmica média** nas dobras. Ela avalia as probabilidades e penaliza mais um erro feito com muita confiança. Para marketing, priorizar uma ocasião sem a combinação consome espaço de um teste, enquanto deixar de priorizar uma ocasião positiva perde uma oportunidade. O projeto mede esses erros e não atribui um custo em reais a eles. A regra, fixada antes da comparação, escolhe a menor perda logarítmica, exceto quando a vantagem sobre um candidato mais simples fica abaixo de 1 erro-padrão da diferença pareada entre dobras (ordem de simplicidade: taxa global < dia × período < logística < dois passos < boosting).
+
+O vencedor foi o **modelo de dois passos com calendário, território e público** (C = 0,1). Contra a regra dia × período no desenvolvimento, a perda logarítmica caiu 2,3·10⁻⁴, com erro-padrão de 2,9·10⁻⁵. Como os hiperparâmetros foram escolhidos nas mesmas dobras, essas perdas de desenvolvimento podem ser otimistas.
+
+### 4.4 Desenvolvimento, teste reservado e avaliação temporal
+
+O protocolo distingue três partições, com papéis diferentes:
+
+| Papel | Base | Refeições | Positivos | Uso |
+|---|---|---|---|---|
+| **Desenvolvimento** | POF 2017–2018, partição `desenvolvimento` (≈80% dos domicílios, por SHA-256 do domicílio) | 245.414 | 154 | comparação dos candidatos em 5 dobras por UPA e ajuste do modelo publicado |
+| **Teste reservado** | POF 2017–2018, partição `teste` (resto 0 por 5) | 63.792 | 27 | aberto **uma vez** para o alvo conjunto, depois da escolha |
+| **Avaliação temporal** | treino na POF 2008–2009 inteira; avaliação no teste de 2017 | 253.935 no treino (101 positivos) | — | verifica se a ordem dos contextos aprendida em 2008 se mantém em 2017 |
+
+A avaliação temporal **treina em 2008–2009 e avalia no teste de 2017–2018** (não o contrário): mede se o que 2008 aprendeu se transporta para 2017. Os níveis absolutos pedem cautela na comparação entre edições, porque em 2008 uma fração maior das pizzas com refrigerante tem sabor não especificado (11,8%, contra 2,6% em 2017) e os instrumentos de coleta diferem.
+
+<a id="resultados"></a>
+## 5. Resultados que orientam a decisão
+
+### 5.1 Teste reservado (aberto uma vez; 27 positivos)
+
+Intervalos de 95% por bootstrap de 1.000 reamostras de UPAs. Fonte: `teste.json` e `resumo.json`.
+
+| Métrica | Modelo de dois passos | Regra dia × período | Taxa global | Modelo contra a regra | Interpretação |
+|---|---|---|---|---|---|
+| Perda logarítmica (principal) | 0,003331 | 0,003357 | 0,003748 | de −0,00021 a +0,00020 | **o teste não demonstrou diferença**: a faixa inclui zero |
+| PR-AUC | 0,0037 | 0,0019 | 0,0004 | de +0,0002 a +0,0078 | **ganho**: toda a faixa acima de zero |
+| ROC-AUC | 0,863 | 0,861 | 0,500 | sem intervalo | praticamente igual à regra |
+| Captura nos 20% de maior score | 74% (20 de 27) | 77% (≈21 de 27) | 20% | de −23 a +15 pontos | **o teste não demonstrou diferença** |
+| Observado / esperado | 0,69 | 0,68 | 0,67 | sem intervalo | o observado foi ≈69% do esperado: a estimativa agregada ficou acima do observado no teste |
+
+**Onde o modelo ganha e onde o teste não demonstrou diferença.** O único ganho com faixa inteira acima de zero é a **PR-AUC** — a **precisão média** (`average_precision_score`, média das precisões ponderada pelo incremento de recall, registrada como `pr_auc` no artefato): o modelo concentra os positivos no topo da lista melhor que a regra simples. Na **perda logarítmica** — a métrica principal do protocolo — e na **captura dos 20% priorizados**, o teste **não demonstrou diferença**: as faixas de incerteza cruzam zero. A ROC-AUC ficou praticamente igual. Não se resume isso a uma "porcentagem de acerto": com 27 positivos, a incerteza é grande e está registrada em cada linha.
+
+**Decisão de priorizar um quinto das refeições.** A precisão nesse corte foi de 0,157%, o recall de 74,1% e o F1 de 0,00313. A matriz de confusão atribuída ao corte foi de 20 verdadeiros positivos, 7 falsos negativos, 12.738,4 falsos positivos e 51.026,6 verdadeiros negativos. As frações vêm do rateio dos empates na fronteira dos 20%. Um falso positivo corresponde a uma ocasião priorizada sem a combinação observada. A calibração por décimos de score e a análise por dia, período, região, área e idade estão no [registro do teste](../artifacts/ocasiao_observada_v1/teste.json). A base registra local de consumo, mas não identifica o canal comercial.
+
+**De onde vem a ordenação.** Quase toda a capacidade de ordenar vem da **chance de pizza**: o primeiro passo (pizza) teve ROC-AUC 0,88 no teste. O segundo passo (guaraná entre as pizzas) **não discriminou**: a ROC-AUC de 0,52 indica ordenação próxima do acaso nesse teste, e a perda logarítmica de 0,2778 ficou pior que a de uma taxa constante (0,2739), em que menor é melhor, sobre 363 refeições com pizza e 27 positivos. Ou seja, o modelo demonstrou ordenar contextos pela chance de **pizza**; a variação da escolha de **guaraná entre as pizzas** entre contextos **não se confirmou** no teste, e a tela avisa disso nos detalhes do resultado.
+
+### 5.2 Avaliação temporal (treino em 2008, avaliação no teste de 2017)
+
+Sem intervalo. Fonte: `temporal.json`. O modelo de dois passos teve PR-AUC 0,0032 contra 0,0019 da regra, perda logarítmica 0,003290 contra 0,003318 e captura de 81% (22 de 27) contra 68%. O modelo ajustado em 2008 ainda concentrou positivos entre as refeições priorizadas em 2017. A ausência de intervalo limita a interpretação da diferença entre os métodos. O nível (observado/esperado) mistura consumo e registro e não deve ser comparado entre edições, pela diferença na fração de sabor não especificado.
+
+### 5.3 Qualificação da independência do teste
+
+O resultado publicado corresponde à primeira avaliação do alvo conjunto nessa partição. Houve exposição anterior a seus componentes, conforme a seção 3.6. Essa distinção importa ao interpretar a independência da avaliação.
+
+<a id="dificuldades"></a>
+## 6. Dificuldades e alcance da previsão
+
+A decisão prática é onde testar um combo. Três cuidados orientam esse uso:
+
+- **Escolha do contexto.** O dia e o período ajudam a ordenar as ocasiões de pizza. A análise do segundo passo, na seção 5.1, delimita o que se pode concluir sobre a preferência pela bebida.
+- **Leitura de recortes.** Há 27 casos positivos em todo o teste reservado. Ao dividir por período, região ou público, as estimativas individuais ficam mais incertas. A aplicação usa suporte mínimo e a faixa da diferença para decidir se sugere uma ação.
+- **Planejamento do piloto.** A estimativa absoluta varia com o perfil das refeições e o instrumento da pesquisa. Para estimar venda incremental, é preciso comparar grupos equivalentes com e sem oferta. As sensibilidades do alvo para o refrigerante sem sabor são discutidas no Data Card.
+
+<a id="fora-do-modelo"></a>
+## 7. O que foi investigado e ficou fora
+
+Quatro fontes foram investigadas em 25/11/2026 e ficaram fora. Clima, feriados e indicadores por estado foram testados contra o modelo sem elas, nas **mesmas refeições, linhas e dobras**, pela perda logarítmica média em 5 dobras, e nenhuma melhorou a previsão do alvo conjunto. O estudo de volume do Delivery Center é de natureza diferente: avaliou **outro desfecho** (contagem de pedidos de comida por cidade, data e período) com **desvio de Poisson**, em outra base e período, e não foi avaliado nas refeições da POF nem com a perda logarítmica do modelo; entrou aqui como referência que não tem ligação com o alvo. O modelo publicado usa os campos harmonizados da POF.
+
+| Fonte | Como foi testada | Resultado | Decisão |
+|---|---|---|---|
+| Clima (ERA5 das 27 capitais) | desvio de temperatura e chuva do período anterior, por UF, somado a calendário, território e sazonalidade | piorou a perda em 2,0·10⁻⁵ em 2008 e 2,7·10⁻⁵ em 2017 | fora: não acrescenta sinal |
+| Feriados nacionais | feriado na janela da semana de coleta, junto com o clima anterior, em 2008; em 2017 só se conhece o mês | entrou na variante que piorou a perda; sem chave em 2017 | fora |
+| Indicadores por estado (SIDRA) | urbanização, faixas etárias e acesso a internet por UF, somados a calendário e território | piorou a perda do alvo conjunto em 2,9·10⁻⁵ | fora: a UF já está representada por região e tipo de área |
+| Delivery Center | volume de pedidos de comida por cidade, data e período (jan–abr/2021, 4 capitais) | o desvio de Poisson caiu pouco e os coeficientes foram pequenos; a base não identifica pizza nem guaraná | fora: mede volume de pedidos, sem ligação com o alvo |
+
+<a id="reproducao"></a>
+## 8. Rastreabilidade e marcos de versão
+
+O [README](../README.md#dados-resultados-e-testes) reúne os comandos para usar outro computador, conferir os testes e reconstruir os dados. O [pacote do modelo](../artifacts/ocasiao_observada_v1/) permite examinar a avaliação sem executar um treino.
+
+| Registro | O que permite conferir |
 |---|---|
-| Renda per capita (R$ de jan/2009) | mín. 52; p1 100; mediana 885; p99 7.554; máx. 26.700. 9 episódios acima de 10 medianas; 12 fora de 1,5 IQR no log |
-| Idade (anos) | 10 a 94; mediana 29; p95 58 |
-| Moradores na unidade de consumo | 1 a 11; 3 e 4 moradores são os mais comuns (338 e 325); 4 episódios com 9 ou mais |
-| Peso da pessoa | p1 349; mediana 3.572; p99 33.901; máx. 60.533; 2 episódios com peso 1,0 |
-| Hora | 2 episódios entre 0 h e 4 h (entram na faixa noite) |
-
-**Distribuição e suporte.** Faixa de hora: noite 865 (74,1%), tarde 149 (12,8%), almoço 89 (7,6%), manhã 65 (5,6%). Sexta a domingo: 554 (47,4%). Domingo tem 156 episódios (13,4%).
-
-**Categorias raras** (menos de 30 episódios ou menos de 5 positivos; só leitura descritiva): manhã e almoço (k = 2 cada); 60 anos ou mais (n = 52, k = 4); moradores = 1 (n = 41, k = 2); 4 combinações de dia × faixa de hora (manhã e almoço, nos dois tipos de dia), entre elas `sex_dom|manhã` (n = 21, k = 0); 18 das 27 UFs (nenhuma UF chega a 30 positivos: o maior é k = 11); No total, 30 linhas de tabela têm suporte baixo, contando 4 níveis vazios (`desconhecida` e `sem_renda`). A hora isolada (0 a 23 h) não é mais tabulada: níveis com 1 episódio seriam suprimidos e a soma pelo total os revelaria.
-
-### 4. Distribuição do alvo
-
-| Medida | k / n | Taxa |
-|---|---|---|
-| Guaraná entre episódios com pizza | 101 / 1.168 | 8,65% |
-| Algum refrigerante entre episódios com pizza | 655 / 1.168 | 56,1% |
-| Guaraná entre episódios com refrigerante | 101 / 655 | 15,4% |
-
-O alvo é raro (cerca de 1 em 12). Como 132 dos 655 episódios com refrigerante são "não especificado", a taxa identificada pode subestimar o guaraná consumido.
-
-### 5. Guaraná entre episódios com pizza, por contexto
-
-Todas as taxas são **sem peso**. "IC boot." é o bootstrap de UPAs; "Wilson", onde aparece, supõe independência; "W1" é a taxa ponderada (item 6), sem intervalo. Taxas de grupos com k < 5 são só descrição.
-
-#### 5.1 Período
-
-| Nível | n | k | Taxa (%) | IC boot. (%) | Wilson (%) | W1 (%) | Suporte |
-|---|---|---|---|---|---|---|---|
-| Segunda a quinta | 614 | 42 | 6,8 | 4,5 a 9,4 | 5,1 a 9,1 | 6,4 | ok |
-| Sexta a domingo | 554 | 59 | 10,7 | 7,3 a 14,2 | 8,3 a 13,5 | 9,4 | ok |
-| Manhã | 65 | 2 | 3,1 | 0,0 a 8,2 | 0,8 a 10,5 | 4,8 | baixo |
-| Almoço | 89 | 2 | 2,2 | 0,0 a 6,0 | 0,6 a 7,8 | 1,8 | baixo |
-| Tarde | 149 | 15 | 10,1 | 4,7 a 16,3 | 6,2 a 15,9 | 9,7 | ok |
-| Noite | 865 | 82 | 9,5 | 6,9 a 12,1 | 7,7 a 11,6 | 8,7 | ok |
-| Segunda a quinta · manhã | 44 | 2 | 4,5 | 0,0 a 11,9 | 1,3 a 15,1 | 6,0 | baixo |
-| Segunda a quinta · almoço | 48 | 1 | 2,1 | 0,0 a 7,3 | 0,4 a 10,9 | 2,3 | baixo |
-| Segunda a quinta · tarde | 92 | 8 | 8,7 | 2,1 a 17,2 | 4,5 a 16,2 | 5,9 | ok |
-| Segunda a quinta · noite | 430 | 31 | 7,2 | 4,4 a 10,3 | 5,1 a 10,1 | 7,2 | ok |
-| Sexta a domingo · manhã | 21 | 0 | 0,0 | — (degenerado) | 0,0 a 15,5 | 0,0 | baixo |
-| Sexta a domingo · almoço | 41 | 1 | 2,4 | 0,0 a 8,6 | 0,4 a 12,6 | 1,2 | baixo |
-| Sexta a domingo · tarde | 57 | 7 | 12,3 | 4,1 a 22,5 | 6,1 a 23,2 | 17,4 | ok |
-| Sexta a domingo · noite | 435 | 51 | 11,7 | 7,8 a 16,0 | 9,0 a 15,1 | 9,8 | ok |
-
-![Dia × período](eda_2008/figuras/taxa_periodo.svg)
-
-- **Comparação exploratória.** Sexta a domingo menos segunda a quinta = **+3,8 pontos percentuais**, IC boot. de **−0,2 a +8,1**, com 5.000 réplicas. A escolha do contraste ocorreu após a consulta às taxas por dia. O intervalo inclui zero e também comporta diferenças de alguns pontos; a estimativa não comprova a diferença entre os grupos. A avaliação temporal preserva a ressalva de exposição prévia descrita no Data Card.
-- Manhã e almoço têm 4 positivos em 154 episódios (2,6%), com k = 2 em cada: a amostra não permite afirmar que a taxa seja baixa nem que seja zero.
-- **Zero observado.** `sexta a domingo · manhã` tem **0 positivos em 21 episódios** (19 UPAs). O bootstrap é degenerado (acima) e não gera intervalo. Wilson dá 0,0 a 15,5%, supondo independência. O método exato de Clopper-Pearson sobre os mesmos 21 episódios dá limite superior de 16,1%, e tratando as 19 UPAs como unidades, 17,7%. Os métodos diferem e nenhum é intervalo garantido para observações agrupadas: o zero observado é compatível com taxas de alguns pontos acima de 15%, conforme o método, e não é probabilidade zero.
-
-#### 5.2 Dia da semana
-
-| Dia | n | k | Taxa (%) | IC boot. (%) | W1 (%) |
-|---|---|---|---|---|---|
-| Segunda | 75 | 6 | 8,0 | 1,5 a 16,4 | 5,4 |
-| Terça | 163 | 14 | 8,6 | 4,5 a 13,4 | 6,7 |
-| Quarta | 116 | 5 | 4,3 | 0,9 a 8,4 | 3,5 |
-| Quinta | 260 | 17 | 6,5 | 3,1 a 10,5 | 8,3 |
-| Sexta | 188 | 14 | 7,4 | 3,5 a 12,1 | 4,0 |
-| Sábado | 210 | 30 | 14,3 | 8,0 a 21,1 | 15,8 |
-| Domingo | 156 | 15 | 9,6 | 4,2 a 16,2 | 7,5 |
-
-![Dia da semana](eda_2008/figuras/taxa_dia_semana.svg)
-
-O sábado tem a maior taxa observada (14,3%) e 30 dos 59 positivos de sexta a domingo. As comparações entre dias não foram testadas diretamente, e sobreposição de intervalos não prova igualdade nem diferença (é um critério conservador): a amostra não permite dizer que a sexta difere dos dias úteis nem descartar diferenças de alguns pontos. Sete comparações olhadas depois dos dados: **exploratório**.
-
-#### 5.3 Região
-
-| Região | n | k | Taxa (%) | IC boot. (%) | W1 (%) |
-|---|---|---|---|---|---|
-| Norte | 133 | 8 | 6,0 | 1,9 a 11,0 | 8,3 |
-| Nordeste | 203 | 32 | 15,8 | 10,1 a 22,4 | 20,8 |
-| Sudeste | 346 | 22 | 6,4 | 3,0 a 10,2 | 4,9 |
-| Sul | 287 | 22 | 7,7 | 3,4 a 12,9 | 9,3 |
-| Centro-Oeste | 199 | 17 | 8,5 | 4,3 a 13,5 | 6,7 |
-
-![Grande região](eda_2008/figuras/taxa_regiao.svg)
-
-O Nordeste concentra 32 dos 101 positivos (32%) e tem a maior taxa nas duas leituras. A diferença não depende de uma UF só: retirando, uma de cada vez, as nove UFs nordestinas, a taxa do Nordeste fica entre 14,0% e 17,1%, acima das demais regiões (6,0% a 8,5%; 69 de 965, ou 7,2%, juntas). Os 32 positivos estão em 24 UPAs, com no máximo 2 por UPA; nas UFs com pelo menos 5 positivos aparecem 9/44 (BA), 7/25 (PE) e 6/36 (MA). Ainda assim é um achado olhado depois dos dados, entre cinco regiões e com UPAs agrupadas: hipótese para a validação por região, não regra.
-
-#### 5.4 Perfil
-
-| Característica | n | k | Taxa (%) | IC boot. (%) | W1 (%) |
-|---|---|---|---|---|---|
-| Capital / urbano fora da capital / rural | 377 / 671 / 120 | 35 / 56 / 10 | 9,3 / 8,3 / 8,3 | 5,7–13,5 / 5,8–11,2 / 2,0–15,8 | 8,2 / 7,8 / 7,5 |
-| Feminino / masculino | 643 / 525 | 57 / 44 | 8,9 / 8,4 | 6,4–11,5 / 5,8–11,2 | 8,2 / 7,8 |
-| 10–17 anos | 256 | 20 | 7,8 | 4,4–11,8 | 11,0 |
-| 18–29 anos | 342 | 30 | 8,8 | 5,5–12,4 | 5,1 |
-| 30–44 anos | 350 | 31 | 8,9 | 5,7–12,3 | 11,4 |
-| 45–59 anos | 168 | 16 | 9,5 | 4,9–14,8 | 5,2 |
-| 60 anos ou mais | 52 | 4 | 7,7 | 1,5–15,6 | 3,8 |
-| Até fundamental / médio / superior | 430 / 437 / 301 | 41 / 38 / 22 | 9,5 / 8,7 / 7,3 | 6,5–12,8 / 5,6–12,1 / 4,2–10,8 | 11,0 / 7,8 / 4,6 |
-| Renda per capita: menor / média / maior tercil | 389 / 388 / 391 | 30 / 37 / 34 | 7,7 / 9,5 / 8,7 | 4,7–11,1 / 5,8–13,6 / 5,5–12,3 | 10,3 / 8,2 / 5,9 |
-| Moradores: 1 / 2 / 3 / 4 / 5+ | 41 / 202 / 338 / 325 / 262 | 2 / 19 / 33 / 18 / 29 | 4,9 / 9,4 / 9,8 / 5,5 / 11,1 | 0,0–12,5 / 4,9–14,7 / 5,9–14,0 / 3,0–8,5 / 6,1–16,8 | 2,9 / 4,4 / 9,9 / 4,8 / 14,1 |
-| Criança 0–11 no domicílio: sem / com | 667 / 501 | 53 / 48 | 7,9 / 9,6 | 5,4–10,7 / 6,3–13,0 | 7,1 / 9,4 |
-| Adolescente 12–17 no domicílio: sem / com | 717 / 451 | 58 / 43 | 8,1 / 9,5 | 5,8–10,6 / 5,9–13,6 | 5,8 / 11,2 |
-| Idoso 60+ no domicílio: sem / com | 977 / 191 | 87 / 14 | 8,9 / 7,3 | 6,6–11,3 / 3,0–12,2 | 8,6 / 5,0 |
-
-![Perfil](eda_2008/figuras/taxa_perfil.svg)
-
-Sem pesos, sexo, área, faixa etária e renda ficam entre 7,7% e 9,5%, com intervalos largos que se cruzam. Isso mostra que a amostra não revela diferença nítida entre esses grupos, mas não descarta diferenças de alguns pontos, e a sobreposição de intervalos não é teste de igualdade. Escolaridade tem declive observado (9,5% → 7,3%), não testado. As taxas por número de moradores (4,9; 9,4; 9,8; 5,5; 11,1%) não seguem ordem monótona e não há explicação testada; com 1 morador, k = 2. **A renda não mostra gradiente na taxa de guaraná sem pesos**; isso não contradiz o TAPI, que fala de consumo de pizza e de associação por classe, outra quantidade. Com W1, renda e escolaridade passam a mostrar gradiente (item 6): as duas leituras discordam. Os tercis de renda foram calculados com todos os episódios de 2008 e são **só descritivos** (não entram no modelo).
-
-### 6. Pesos: W1 como sensibilidade e suas limitações
-
-- **O que é W1.** Peso da pessoa (`PESO_FINAL`, do IBGE) dividido pelo número de dias de registro da pessoa no arquivo de consumo (quadros 71 e 72 são o 1º e o 2º dia de coleta). É uma **ponderação derivada**, não um peso por dia fornecido pelo IBGE. 18 episódios são de pessoas com 1 dia de registro e 1.150 de pessoas com 2.
-- **Leitura principal sem pesos.** A pergunta de comparação entre modelos é qual deles prevê melhor a condicional na amostra; o peso responde a outra e custa precisão.
-- **Limitações.** O peso é calibrado por UF, sexo e idade, mas **não corrige a composição por dia da semana** (domingo é 13,4% dos episódios em 2008 e 32,2% em 2017) nem a diferença entre o 1º e o 2º dia. Os pesos são desiguais (p1 349, p99 33.901): estimativas por grupo pequeno oscilam muito, por exemplo a taxa por faixa etária vai de 3,8% a 11,4% com W1 contra 7,7% a 9,5% sem pesos. O bootstrap por UPA ignora o estrato; 144 dos 293 estratos têm uma só UPA, portanto os IC ponderados são aproximações. O IC ponderado não é mostrado onde o bootstrap é degenerado.
-- **Sinais que mudam com W1:** o declive por escolaridade fica mais forte (11,0% → 4,6%) e o da renda aparece (10,3% → 5,9%), enquanto sem pesos a renda é plana. Essa diferença entre as duas leituras é um diagnóstico de que os pesos importam, não uma conclusão sobre renda.
-- **Dia de coleta (diagnóstico do instrumento, fora do modelo).** 1º dia: 37 de 484 (7,6%); 2º dia: 64 de 684 (9,4%).
-- **O que W1 estima.** A proporção de episódios com guaraná entre os com pizza num dia médio de registro, na população de pessoas; para as 18 pessoas com 1 só dia, supõe-se que esse dia represente os dois.
-- **Não** se usa aproximação de Kish como tamanho de amostra de treinamento.
-
-### 7. Redundâncias entre indicadores e variáveis
-
-- **Colinearidade exata.** As 28 colunas incluem **5 conjuntos completos de indicadores** (hora, região, área, idade, escolaridade) que somam 1 em todos os 1.168 episódios: cada um é colinear com o intercepto (28 colunas, posto 24). Com penalização (ridge), a solução é única; sem penalização, a logística não seria identificada.
-- **Interação.** `sexta_a_domingo_x_noite` é exatamente o produto de `sexta_a_domingo` por `hora_noite` (confirmado em 1.168 episódios) e tem correlação 0,81 com `sexta_a_domingo`. Ser produto de duas colunas **não** a torna combinação linear delas: ela acrescenta uma dimensão ao posto da matriz (posto 24 com a interação e 23 sem, nas 28 colunas e também com intercepto). Correlação alta não é dependência linear, e a interação não é redundante no sentido do posto.
-- **Pares de colunas com correlação absoluta ≥ 0,5:** `sexta_a_domingo` × interação (0,81); `area_capital` × `area_urbano_nao_capital` (−0,80); `hora_tarde` × `hora_noite` (−0,65); `escolaridade_ate_fundamental` × `escolaridade_medio` (−0,59); `idade_10_17` × `presenca_adolescente_12_17` (0,53).
-- **Associação entre variáveis nativas (V de Cramér ≥ 0,3, sem o alvo):** faixa etária × presença de adolescente (0,55), faixa etária × presença de idoso (0,49), moradores × presença de criança (0,45), faixa etária × escolaridade (0,38), moradores × presença de adolescente (0,38). A faixa etária do próprio episódio e a composição do domicílio contam parte da mesma informação.
-- **Unidade de consumo = domicílio** na amostra: moradores, presenças e renda são constantes por domicílio e repetem o mesmo valor entre seus episódios.
-
-### 8. Consequências para validação, interpretação e modelagem
-
-**Validação.**
-- Agrupar sempre por UPA (pessoa e domicílio ficam do mesmo lado). Com 101 positivos em 70 UPAs, cada dobra de 10 terá em média cerca de 10 positivos: estratificar e repetir a validação, e relatar a variação entre repetições.
-- Deixar uma região fora é informativo mas frágil: Norte tem 8 positivos e Nordeste, 32. A avaliação por região deve mostrar n e k e não taxa onde k < 5.
-- O IC por UPA ignora o estrato (144 dos 293 estratos têm uma só UPA) e é condicional à presença do nível; não é limite garantido para outros métodos de intervalo.
-- Em 2017 o domingo pesa 32,2% dos episódios; qualquer diferença entre 2008 e 2017 mistura calendário, instrumento e tempo.
-
-**Interpretação.**
-- O score é a frequência histórica de guaraná em episódios com pizza de contextos parecidos em 2008–09; não é chance de pedir, nem preferência pela marca, nem efeito de ação.
-- Taxas em grupos com k < 5 não devem virar recomendação; a classe `evidencia_insuficiente` do Decision Engine tem base empírica.
-- Zero observado (por exemplo `sex_dom|manhã`) não é probabilidade zero.
-
-**Modelagem (sem concluir sobre desempenho).**
-- Os dados mostram heterogeneidade modesta no perfil e mais no calendário e na região; **isso não permite antecipar se um modelo superará o baseline por dia e período, nem que não funcionará**. Só a validação dirá.
-- Os indicadores completos exigem tratamento explícito da colinearidade. A especificação inicial prevê logística com penalização ridge; intercepto e escala devem ser definidos antes do ajuste.
-- A associação descritiva não demonstra a contribuição preditiva de um grupo de variáveis; essa contribuição exige comparação entre modelos em dados de validação.
-
-<a id="protocolo-modelagem"></a>
-
-## Protocolo de modelagem
-
-Versão 1.0, de 14/11/2026, substituída pelo [protocolo v3](#produto-vigente). Registro histórico: o arquivo de parâmetros (`configs/protocolo_modelagem.json`), os módulos `occasion.*` e os artefatos desta versão saíram da entrega em 24/11/2026, e os comandos abaixo não rodam na árvore atual. Os parâmetros ficavam em `configs/protocolo_modelagem.json`. O SHA-256 desse arquivo foi registrado antes do primeiro ajuste, e a execução recusa um arquivo com hash diferente. Qualquer mudança exige nova versão do protocolo.
-
-Execução na época:
-
-```bash
-OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=src \
-  python -m occasion.modelagem_2008 --destino <pasta fora do repositório> --protocolo-sha256 <hash registrado>
-python -m occasion.modelagem_2008 --comparar <execução 1> <execução 2>
-```
-
-Variáveis de ambiente: `CASE_AMBEV_SAIDA_ROOT` apontava para as cinco entradas de 2008 (conferidas por `entradas_2008.json`), e `CASE_AMBEV_RAW_ROOT` aponta para os microdados, usados no peso W1.
-
-### 1. Dados e variáveis
-
-- **Episódios:** os 1.168 de 2008–2009 (101 positivos, 644 UPAs).
-- **Logística:** as 28 colunas de [`variaveis.json`](../configs/variaveis.json), que vêm de 13 variáveis derivadas.
-- **B1:** frequência por dia da semana × faixa de hora (28 células). **B2:** frequência por grande região × faixa de hora (20 células).
-- **Ausentes:** valor ausente ou renda inválida interrompe a execução; não há imputação.
-- **Fora do modelo:** dia de coleta, local da refeição, ocasião, dia atípico, qualquer indicador de refrigerante, UF e indicadores por UF. A UF entra só no relato por segmento.
-- **Valor-p:** não é critério para retirar variáveis.
-- **Contraste sexta–domingo:** foi definido depois de ver as marginais de 2008. Em 2008 é exploratório, e não guia nenhuma escolha.
-
-### 2. Partições
-
-- **Divisão externa:** `StratifiedGroupKFold` com 5 dobras, estratificado pelo alvo e agrupado por UPA, em 20 repetições.
-- **Divisão interna:** 5 dobras, dentro do treino de cada dobra externa, para escolher o hiperparâmetro.
-- **Sementes:** externa `20261114 + r`; interna `20261114 + 1000·(r+1) + k`.
-- **Pareamento:** todos os modelos usam as mesmas partições.
-
-Portões verificados antes de qualquer ajuste:
-- nenhuma UPA nos dois lados de uma divisão;
-- pelo menos 10 positivos por dobra externa e 8 por dobra interna;
-- partições diferentes entre repetições, medidas pela mudança de co-atribuição de pares de UPAs.
-
-O escore fora da dobra de cada episódio é a média das 20 previsões fora da dobra.
-
-### 3. Candidatos e grades
-
-| Modelo | Definição | Grade |
-|---|---|---|
-| B0 | taxa do treino | — |
-| B1, B2 | (k + m·p₀)/(n + m) por célula; célula ausente recebe p₀ | m ∈ {1, 2, 5, 10, 20, 50, 100, 200} |
-| L | `StandardScaler` + `LogisticRegression(l1_ratio=0, solver="lbfgs")` | C = 10^{−3, −2,5, …, 2} |
-
-- **Escolha na grade:** menor log-loss das previsões internas fora da dobra. Empate abaixo de 1e-9 fica com o valor mais regularizado.
-- **Escala:** as 28 colunas são padronizadas dentro de cada conjunto de treino, sem pesos.
-- **Colinearidade:** os indicadores completos ficam sem nível de referência; com penalização ridge a solução é única.
-- **Intercepto:** não é penalizado pelo `lbfgs`.
-- **Convergência:** não convergir é erro.
-
-### 4. Pesos
-
-- **A0:** sem pesos; é o ajuste principal.
-- **A1:** peso W1, isto é, o peso da pessoa (`PESO_FINAL`) dividido pelos dias de registro, normalizado para média 1 no treino de cada divisão. A seleção usa log-loss ponderada.
-- **A1t:** W1 aparado nos percentis 1 e 99 do treino.
-
-A1 e A1t são sensibilidades e não participam da escolha. A normalização mantém a escala de C, porque multiplicar os pesos por uma constante equivale a multiplicar C por ela.
-
-### 5. Métricas, incerteza e escolha
-
-- **Métrica principal:** log-loss sem pesos, média das 20 repetições.
-- **Secundárias:** Brier, ROC-AUC, PR-AUC, razão observado/esperado (O/E), intercepto de calibração com inclinação fixa e inclinação de calibração; e, no limiar, precisão, recall, F1, matriz de confusão e *lift*.
-- **Diferença pareada entre modelos:** média, por episódio, da diferença de perda nas repetições. O intervalo de 95% vem do bootstrap percentil de UPAs inteiras (5.000 réplicas, semente 20261115).
-- **Escolha:** M* é o candidato de menor log-loss. Escolhe-se o mais simples, na ordem B0 < B1 < B2 < L, cuja diferença em relação a M* tem intervalo que não fica inteiro abaixo de zero.
-
-Limitações:
-- o intervalo é condicional aos ajustes e ignora o estrato;
-- com 70 UPAs com positivo, o intervalo percentil pode cobrir menos que o nominal;
-- o desempenho do candidato escolhido em 2008 é otimista, porque a mesma validação seleciona e avalia.
-
-### 6. Modelo final, limiar e classes
-
-**Modelo final.** O candidato escolhido é reajustado uma única vez nas 1.168 observações. O hiperparâmetro vem de 20 repetições de validação agrupada em 5 dobras sobre o mesmo conjunto, com sementes `20261114 + 5000 + r`.
-
-**Limiar.** t_q é o menor valor distinto do escore fora da dobra cuja fração de episódios com escore ≥ t_q não passa de q, para q ∈ {30%, 20%, 40%}. Empates (12 casas decimais) entram todos ou nenhum. Se o grupo do topo já excede q, t_q fica indefinido e `alta` fica vazia. O limiar é aplicado sem mudança ao modelo final.
-
-**Limitação do limiar.** O modelo final usa 100% dos dados e t_q veio de modelos treinados com 80%, então a cobertura no modelo final pode diferir de q. Ela é relatada em 2008 como otimista, e em avaliação posterior é resultado, sem correção.
-
-**Classes.** Com b = 101/1168, as regras são aplicadas em ordem:
-1. `alta`, se t₃₀ está definido e o escore ≥ t₃₀;
-2. senão `media`, se o escore ≥ b;
-3. senão `baixa`.
-
-As classes vazias são registradas.
-
-**Calibração.** Não há recalibração. Se o intervalo do O/E ou da inclinação excluir 1, o escore é tratado como índice de ordenação.
-
-### 7. Diagnósticos
-
-- **A0 contra A1 (descritivo):** a fração de episódios que trocam de classe `alta` e a correlação de Spearman, sempre entre repetições diferentes. A régua é A0 contra A0. Por convenção, o peso "muda a ordenação mais que a partição" se a mediana da comparação cruzada passar o maior valor da régua na troca de classe e ficar abaixo do menor valor da régua na correlação. É convenção, não teste.
-- **Permutação:** 20 permutações dos rótulos entre UPAs de mesmo tamanho. Se L supera B0 em mais de 2 delas, ou se a mediana da diferença fica abaixo de zero, isso indica a necessidade de investigar o código. Não prova vazamento.
-- **Ablações:** cinco grupos de colunas (calendário, território, perfil, renda, composição da unidade de consumo), comparados com L completo. Não alteram a escolha.
-- **Cada grande região fora:** B0, B1 e L, treinados nas outras quatro regiões. Taxa e AUC são omitidas onde há menos de 5 positivos. A região de teste fica fora do suporte do treino.
-
-### 8. Artefatos e reprodução
-
-- **Formatos:** B0, B1 e B2 em JSON (taxas, sem contagens); L em `joblib`.
-- **Metadados:** cada artefato tem um arquivo `.meta.json` com SHA-256, versão do scikit-learn, hash do protocolo e hiperparâmetro.
-- **Carga:** confere o hash e a versão, e `InconsistentVersionWarning` é tratado como erro. Só se carregam artefatos gerados por este pipeline.
-- **Verificações:**
-  - o artefato recarregado prevê como o objeto gravado (até 1e-12);
-  - duas execuções completas produzem as mesmas escolhas, os mesmos limiares e as mesmas previsões (até 1e-12).
-- **Saídas fora do repositório:** previsões por episódio, registros e artefatos.
-
-### 9. Sensibilidades não executadas
-
-Ficam para depois, só com 2008, e não alteram a escolha:
-- alvo por pessoa-dia;
-- três tratamentos do refrigerante não especificado;
-- só o 1º dia de coleta;
-- bootstrap com estratos colapsados.
-
-Nada calculado depois da avaliação temporal altera modelo, hiperparâmetro, limiares ou classes.
+| `desenvolvimento.json` | Candidatos, configurações, perdas por dobra e escolha antes do teste. |
+| `meta.json` e `resumo.json` | Assinaturas do modelo e do resumo, referência do treino e vínculo com `teste.json`. |
+| `teste.json` e `temporal.json` | Métricas da partição reservada e resultado do experimento que aprende em 2008 e avalia em 2017. |
+| `explicacao.json` | Importância dos campos no desenvolvimento e identificação do modelo e do resumo a que se aplica. |
+
+| Marco no Git | Efeito na entrega |
+|---|---|
+| [07be364](https://github.com/PedroMelo1910/Case-Ambev/commit/07be364) | Estabeleceu um protocolo e referências simples para comparação com a regressão logística. |
+| [07115a2](https://github.com/PedroMelo1910/Case-Ambev/commit/07115a2) | Introduziu uma função de inferência com explicações verificadas, ligando a saída do modelo a uma consulta. |
+| [8f93d67](https://github.com/PedroMelo1910/Case-Ambev/commit/8f93d67) | Incorporou o alvo conjunto, a previsão em dois passos e a regra que indica onde testar o combo. |

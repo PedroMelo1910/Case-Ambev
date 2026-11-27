@@ -139,6 +139,27 @@ artefato = pytest.mark.skipif(not (modelagem.ARTEFATOS / "meta.json").exists(),
 
 
 @artefato
+def test_publico_parcial_sem_observacao_sugere_filtros_que_realmente_abrem_a_consulta():
+    contexto = {**CONTEXTO, "faixa_etaria": "10_17", "escolaridade": "superior", "sexo": "todos"}
+    with pytest.raises(preparo.EntradaInvalida, match="Qualquer faixa ou Qualquer escolaridade"):
+        servidor.avaliar({"contexto": contexto})
+    for campo in ("faixa_etaria", "escolaridade"):
+        resultado = servidor.avaliar({"contexto": {**contexto, campo: "todos"}})
+        assert 0 < resultado["occasion_score"] < 1
+
+
+@artefato
+def test_terca_a_tarde_exibe_estimativa_propria_sem_recomendar_ativacao():
+    resultado = modelagem.avaliar({**CONTEXTO, "dia_semana": 2, "periodo": "tarde"})
+    comparacao = resultado["comparacao"]
+    assert comparacao["faixa"] == "evidencia_insuficiente"
+    assert resultado["recommendation_category"] == "nao_priorizar"
+    assert resultado["leitura"]["destaque"] == "estimativa"
+    assert resultado["occasion_score"] == comparacao["estimativa"] != comparacao["referencia"]
+    assert regras.texto_pct(resultado["occasion_score"]) in resultado["leitura"]["linha"]
+
+
+@artefato
 def test_avaliar_devolve_os_seis_campos_do_tapi():
     r = modelagem.avaliar(CONTEXTO)
     for campo in ("occasion_score", "classification", "top_factors", "recommendation_category",

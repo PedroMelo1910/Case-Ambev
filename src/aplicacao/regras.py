@@ -98,7 +98,7 @@ def frase_do_fator(fator: dict) -> str:
 LEITURAS = MappingProxyType({"acima_do_habitual": "Acima da média neste contexto",
                              "abaixo_do_habitual": "Abaixo da média neste contexto",
                              "sem_diferenca_demonstrada": "Diferença não demonstrada para este contexto",
-                             "evidencia_insuficiente": "Use a média como ponto de partida"})
+                             "evidencia_insuficiente": "Estimativa exploratória para este contexto"})
 ESTADOS_DA_LEITURA = MappingProxyType({"acima_do_habitual": "acima", "abaixo_do_habitual": "abaixo",
                                        "sem_diferenca_demonstrada": "incerta", "evidencia_insuficiente": "insuficiente"})
 AREAS_DO_RECORTE = MappingProxyType({"capital": "capitais", "urbano_nao_capital": "áreas urbanas fora das capitais",
@@ -151,11 +151,10 @@ def leitura_do_cenario(comparacao: Mapping, medida: str, referencia: str, explor
                     "seja igual. Use a média como ponto de partida.")
         detalhe = f"A faixa de 95% da diferença vai {faixa_txt} e inclui zero." if faixa_txt else ""
     else:
-        destaque = "referencia"
-        linha = f"{ref} das refeições com comida da amostra de treino (POF 2017–2018) tiveram pizza e guaraná juntos."
-        mensagem = "Para esse contexto, vale usar a média como ponto de partida."
-        detalhe = ("Não há base suficiente para ler só este contexto" + (f": {nota}." if nota else ".")
-                   + f" A estimativa seria {est}, mas o próprio sistema não a sustenta aqui.")
+        destaque = "estimativa"
+        linha = f"O modelo estima pizza e guaraná juntos em {est} das refeições deste contexto."
+        mensagem = "Os dados disponíveis ainda não permitem concluir se este cenário se destaca da média."
+        detalhe = nota or ""
     return {"estado": ESTADOS_DA_LEITURA[faixa], "titulo": LEITURAS[faixa], "destaque": destaque, "linha": linha,
             "mensagem": mensagem, "detalhe": detalhe, "explicacao": mensagem}
 

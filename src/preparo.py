@@ -395,7 +395,7 @@ def _categoria(valor: object, campo: str, validos: tuple[str, ...]) -> str:
 def campos_informados(contexto: Mapping[str, object], campos: tuple[str, ...]) -> tuple[str, ...]:
     """Campos esperados com `periodo` no lugar de `hora` quando o contexto traz o periodo; recusa os dois ou nenhum."""
     if ("hora" in contexto) == ("periodo" in contexto):
-        raise EntradaInvalida("informe exatamente um entre hora e periodo (o modelo usa só o período do dia)")
+        raise EntradaInvalida("informe exatamente um entre hora e periodo")
     if "periodo" not in contexto:
         return campos
     return tuple("periodo" if campo == "hora" else campo for campo in campos)

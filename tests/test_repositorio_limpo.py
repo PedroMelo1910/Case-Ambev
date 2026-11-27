@@ -5,6 +5,7 @@ mesmo ignorados depois, continuam sendo conferidos.
 """
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -15,6 +16,23 @@ FRASE = "licença específica dos microdados não confirmada; aceite de risco re
 CACHES = {".git", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache"}  # nao versionados (.gitignore)
 EXT_DADOS = {".zip", ".parquet", ".xls", ".xlsx", ".txt", ".csv", ".db", ".duckdb", ".sqlite"}
 PADROES_ABSOLUTOS = [r"/mnt/[a-z]/", r"/home/\w+", r"[A-Za-z]:\\", r"/Users/\w+"]
+# Variaveis do projeto que precisam ficar AUSENTES para que estes testes provem que o comando
+# funciona sem elas (a configuracao se descobre pela ajuda, nao por um estado de ambiente herdado).
+VARS_PROJETO = ("CASE_AMBEV_RAW_ROOT", "CASE_AMBEV_PROCESSADO_ROOT", "CASE_AMBEV_SAIDA_ROOT",
+                "CASE_AMBEV_SELADO_ROOT")
+
+
+def _ambiente_subprocesso(repo):
+    """Ambiente isolado para rodar os modulos num subprocesso.
+
+    Parte do ambiente do SO (precisa de SystemRoot etc. para o Winsock/asyncio no Windows; sem eles,
+    importar sklearn/joblib quebra com WinError 10106), remove explicitamente as variaveis do projeto
+    para preservar o isolamento que o teste verifica, e fixa so PYTHONPATH e COLUMNS.
+    """
+    env = {k: v for k, v in os.environ.items() if k not in VARS_PROJETO}
+    env["PYTHONPATH"] = str(repo / "src")
+    env["COLUMNS"] = "200"
+    return env
 
 
 def _arquivos(repo):
@@ -83,7 +101,7 @@ def test_ajuda_da_linha_de_comando_lista_as_variaveis_de_ambiente(repo):
     """Sem .env.example, a configuracao se descobre pela ajuda do comando (e pelo erro quando falta a variavel)."""
     import subprocess
     import sys
-    env = {"PYTHONPATH": str(repo / "src"), "COLUMNS": "200"}
+    env = _ambiente_subprocesso(repo)
     for modulo, variaveis in (("coleta", ("CASE_AMBEV_RAW_ROOT",)),
                               ("preparo", ("CASE_AMBEV_RAW_ROOT", "CASE_AMBEV_PROCESSADO_ROOT"))):
         r = subprocess.run([sys.executable, "-m", modulo, "--help"], capture_output=True, text=True, env=env, cwd=repo)
@@ -187,7 +205,7 @@ def test_auditoria_e_eda_tem_comando_nos_modulos_responsaveis(repo):
     """A auditoria das refeicoes (preparo) e a EDA do alvo (modelagem) reproduzem a analise exploratoria do TAPI."""
     import subprocess
     import sys
-    env = {"PYTHONPATH": str(repo / "src"), "COLUMNS": "200"}
+    env = _ambiente_subprocesso(repo)
     for modulo, comando in (("preparo", "auditoria"), ("modelagem", "eda")):
         r = subprocess.run([sys.executable, "-m", modulo, "--help"], capture_output=True, text=True, env=env, cwd=repo)
         assert r.returncode == 0, r.stderr

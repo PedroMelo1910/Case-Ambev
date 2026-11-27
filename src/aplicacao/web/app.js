@@ -190,12 +190,15 @@ async function avaliar(evento) {
     const dados = await enviarJson("/api/avaliar", pedido);
     estado.consulta = pedido;
     mostrarResultado(dados);
+    if (JSON.stringify(pedido.contexto) !== JSON.stringify(contexto())) marcarDesatualizado();
     if (foraDaJanela($("resultado"))) $("resultado").scrollIntoView({ block: "start", behavior: rolagem() });
   } catch (erro) {
     $("anuncio").textContent = "";
-    if (!erro.tipo) { // falha ao montar a tela: nao deixar resultado parcial ou antigo a vista
+    if (!erro.tipo || erro.tipo === "entrada_invalida") {
       $("conteudo-resultado").hidden = true;
       $("estado-vazio").hidden = false;
+      $("aviso-botao").hidden = true;
+      $("resultado").classList.remove("esta-desatualizado");
       estado.temResultado = false;
     }
     if (erro.tipo === "entrada_invalida") {
@@ -266,36 +269,28 @@ function mostrarAcao(r) {
   $("justificativa").textContent = r.recommendation_reason;
 }
 
-// Cenario raro: uma frase com o motivo de partir da media (motivo e nota vem da comparacao do servidor).
-function motivoDaReferencia(c) {
-  const motivos = c.motivos.map((m) => rotulos().motivos[m] || m).join("; ");
-  if (motivos && c.nota) return `${motivos}: ${c.nota}.`;
-  return motivos || c.nota || "";
-}
-
 function mostrarPlacar(r, insuficiente) {
   const c = r.comparacao;
-  const valor = insuficiente ? c.referencia : c.estimativa;
-  $("num-estimativa-rotulo").textContent = insuficiente ? "Ponto de partida: média das refeições" : "Chance neste cenário";
-  $("num-estimativa").textContent = pct(valor);
+  $("num-estimativa-rotulo").textContent = insuficiente ? r.leitura.titulo : "Chance neste cenário";
+  $("num-estimativa").textContent = pct(r.occasion_score);
   $("num-medida").textContent = "das refeições com comida têm pizza e guaraná juntos";
   $("faixa-simbolo").textContent = SIMBOLOS[c.faixa] || "";
   $("faixa-texto").textContent = rotulos().faixas[c.faixa] || c.faixa;
   $("num-media").textContent = `Média das refeições: ${pct(c.referencia)}`;
-  $("num-media").hidden = insuficiente;
-  $("linha-medida").textContent = insuficiente ? r.leitura.mensagem : r.leitura.linha;
-  $("leitura").textContent = insuficiente ? motivoDaReferencia(c) : r.leitura.mensagem;
+  $("linha-medida").textContent = r.leitura.linha;
+  $("linha-medida").hidden = insuficiente;
+  $("leitura").textContent = r.leitura.mensagem;
   $("barras").hidden = insuficiente;
   if (!insuficiente) mostrarBarras(c);
 }
 
 function mostrarResultado(r) {
   const c = r.comparacao;
-  const insuficiente = r.leitura.destaque === "referencia";
+  const insuficiente = c.faixa === "evidencia_insuficiente";
   $("conteudo-resultado").setAttribute("data-faixa", c.faixa);
   $("cenario").textContent = descreverCenario(estado.consulta.contexto);
   mostrarPlacar(r, insuficiente);
-  $("bloco-fatores").hidden = insuficiente;
+  $("titulo-fatores").textContent = insuficiente ? "O que pesou na estimativa exploratória" : "O que mais pesou";
   mostrarFatores(r);
   mostrarAcao(r);
   mostrarDetalhes(r);
@@ -328,7 +323,9 @@ function mostrarDetalhes(r) {
   $("leitura-detalhe").hidden = !r.leitura.detalhe;
   const numeros = [
     ["Estimativa do modelo", `${pct(c.estimativa)} (faixa de ${nivel}%: ${pct(c.intervalo_estimativa[0])} a ${pct(c.intervalo_estimativa[1])})`],
-    ["Diferença para a média", `${pp(c.diferenca_pp)} (faixa de ${nivel}%: ${pp(c.intervalo_pp[0])} a ${pp(c.intervalo_pp[1])})`],
+    ["Diferença para a média", c.intervalo_pp
+      ? `${pp(c.diferenca_pp)} (faixa de ${nivel}%: ${pp(c.intervalo_pp[0])} a ${pp(c.intervalo_pp[1])})`
+      : `${pp(c.diferenca_pp)} (faixa indisponível)`],
     [c.referencia_nome ? maiuscula(c.referencia_nome) : "Média", pct(c.referencia)],
     ["Regra simples (dia × período)", pct(c.regra_dia_periodo)]];
   if (k) {

@@ -106,7 +106,7 @@ def test_resultado_tem_a_ordem_chance_media_fatores_acao_e_os_detalhes(web):
     html = web["html"]
     posicoes = [html.index(f'id="{i}"') for i in ("num-estimativa", "comparacao", "fatores", "categoria")]
     assert posicoes == sorted(posicoes)
-    assert "Como chegamos a esse resultado" in html
+    assert "Como o modelo calculou a estimativa" in html
     assert {"estado-vazio", "falha", "desatualizado", "resumo-erros"} <= web["dom"].ids
 
 

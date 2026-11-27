@@ -490,8 +490,12 @@ def _publicos(canonico: dict, resumo: dict) -> list[tuple[dict, float]]:
                 nacional[chave] = nacional.get(chave, 0) + n
         publicos = [(v, n) for chave, n in nacional.items() if (v := _combina(canonico, chave))]
     if not publicos:
-        raise preparo.EntradaInvalida("não há refeições observadas com essa combinação de público; use 'todos' em um "
-                                      "dos campos")
+        opcoes = {"faixa_etaria": "Qualquer faixa", "sexo": "Qualquer sexo", "escolaridade": "Qualquer escolaridade"}
+        alternativas = [rotulo for campo, rotulo in opcoes.items() if canonico[campo] != preparo.TODOS
+                        and any(_combina({**canonico, campo: preparo.TODOS}, chave) for chave in nacional)]
+        sugestao = " ou ".join(alternativas) if alternativas else "Público geral"
+        raise preparo.EntradaInvalida(f"a pesquisa não registrou refeições com essa combinação de público. "
+                                      f"Para ampliar a consulta, selecione {sugestao}.")
     return publicos
 
 
